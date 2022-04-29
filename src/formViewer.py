@@ -5,6 +5,11 @@ class formViewer():
         self.parent = _parent
         self.m_widget = _widget
 
+        self.resolution = None
+        self.field = None
+        self.pore_sus = None
+        self.matrix_sus = None
+
         self.m_widget.setGeometry(0,0,100,100)
         self.m_widget.setMinimumSize(QtCore.QSize(100, 100))
 
@@ -122,5 +127,13 @@ class formViewer():
     # @Slot()
     def runAnalysis(self):
         print('running analysis...')
+        try:
+            self.resolution = float(self.imgResolutionLineEdit.text())
+            self.field = float(self.fieldIntensityLineEdit.text())
+            self.pore_sus = float(self.poreSusLineEdit.text())
+            self.matrix_sus = float(self.matSusLineEdit.text())
+            self.parent.run()
+        except:
+            print("could not load form")
         return
 

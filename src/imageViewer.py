@@ -76,6 +76,7 @@ class imageViewer():
         self.m_data = None # numpy array
         self.m_image = None # QImage object
         self.m_map = []  # path of all image files 
+        self.full_data = None # numpy array
     
     def clear(self):
         self.__del__()
@@ -120,7 +121,8 @@ class imageViewer():
             self.m_map.clear() # remove all items
             for filepath in files:
                 self.m_map.append( filepath )
-            self.loadImageData(files[0],True)
+            self.m_map.sort()
+            self.loadImageData(self.m_map[0],True)
             self.buttonPlus.setEnabled(True) 
             self.buttonMinus.setEnabled(True) 
             self.slideBar.setMaximum(len(self.m_map)-1)
@@ -165,6 +167,13 @@ class imageViewer():
                 else:
                     print("The file does not exist") 
 
+    def getFullData(self):
+        self.full_data = np.zeros((len(self.m_map), self.m_data.shape[0], self.m_data.shape[1]))
+        for index, file in enumerate(self.m_map):
+            self.loadImageData(file, False)
+            self.full_data[index] = np.copy(self.m_data)
+        return
+
 # This function was adapted from (https://github.com/Entscheider/SeamEater/blob/master/gui/QtTool.py)
 # Project: SeamEater; Author: Entscheider; File: QtTool.py; GNU General Public License v3.0 
 # Original function name: qimage2numpy(qimg)
@@ -193,3 +202,4 @@ def convertQImageToNumpy(_qimg):
     else:
         res = res[:,:,0] 
     return res
+

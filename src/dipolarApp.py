@@ -87,4 +87,68 @@ class dipolarApp(QtWidgets.QMainWindow):
             self.m_setup_tab.m_viewer.clear()        
         self.m_setup_tab.m_viewer.openImage()
         return
+
+    # Method
+    def run(self):
+        try:
+            self.m_setup_tab.m_viewer.getFullData()
+            print(self.m_setup_tab.m_form.resolution)
+            print(self.m_setup_tab.m_form.field)
+            print(self.m_setup_tab.m_form.pore_sus)
+            print(self.m_setup_tab.m_form.matrix_sus)
+            print(self.m_setup_tab.m_viewer.full_data.shape)
+
+            self.analysis(self.m_setup_tab.m_viewer.full_data, 
+                          self.m_setup_tab.m_form.resolution, 
+                          self.m_setup_tab.m_form.field,
+                          self.m_setup_tab.m_form.pore_sus,
+                          self.m_setup_tab.m_form.matrix_sus)
+
+            self.m_setup_tab.m_field.setFieldData(self.internal_field)
+        except:
+            print("image not loaded")
+        return
+
+    # Method
+    def analysis(self, data: np.ndarray, resolution: float, field: float, pore_sus: float, matrix_sus: float):
+        sus_contrast = matrix_sus - pore_sus
+        m_factor = (4.0/3.0) * np.pi * ((0.5*resolution)**3.0) * sus_contrast * field 
+        dim_z = data.shape[0]
+        dim_y = data.shape[1]
+        dim_x = data.shape[2]
+        self.internal_field = np.zeros(data.shape)
+
+        for z in range(dim_z):
+            print('k-slice ', z)
+            for y in range(dim_y):
+                for x in range(dim_x):
+                    if(data[z, y, x] == 0):
+                        point = resolution * np.array([x, y, z])
+                        self.internal_field[z, y, x] = self.dipolarSum(data, point, m_factor, resolution) 
+
+        return
+
+    # Method 
+    def dipolarSum(self, data: np.ndarray, point: np.ndarray, m_factor: float, resolution: float) -> float:
+        dipsum = 0.0
+        ek = np.array([0,0,1])
+        dim_z = data.shape[0]
+        dim_y = data.shape[1]
+        dim_x = data.shape[2]
+       
+        for z in range(dim_z):
+            print('i-slice', z)
+            for y in range(dim_y):
+                for x in range(dim_x):
+                    if(data[z, y, x] > 0):
+                        current = resolution * np.array([x,y,z])
+                        dist = current - point
+                        norm_dist = np.linalg.norm(dist)
+                        unit_dist = dist / norm_dist
+                        costheta = np.dot(unit_dist, ek)
+                        Biz = m_factor * (3.0 * costheta**2 - 1.0) / norm_dist**3
+                        dipsum = Biz * norm_dist
+
+        return dipsum
+
     
