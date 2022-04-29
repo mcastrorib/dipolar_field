@@ -1,0 +1,4 @@
+/venv
+/db/
+/src/__pycache__
+/src/setupScreen.py
