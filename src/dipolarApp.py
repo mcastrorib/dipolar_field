@@ -1,16 +1,22 @@
 import os
 import sys
+import time
+import multiprocessing as mp
 import json
 import numpy as np
 import matplotlib
 from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg, NavigationToolbar2QT)
 from matplotlib.figure import Figure
 from PyQt5 import QtCore, QtGui, QtWidgets 
+from pydll import *
 from scipy import ndimage
 from setupTab import setupTab
 from imageViewer import imageViewer
 from fieldViewer import fieldViewer
 from formViewer import formViewer
+
+dipolar_sum_core_dll = ez_load_dynamic_library(os.path.join(os.path.dirname(__file__), 'bin'), 'dipolar_sum_core')
+dipolar_sum_core_dll.call_naive_python_call.restype = c_void_p
 
 # Inherit from QDialog
 class dipolarApp(QtWidgets.QMainWindow):
@@ -105,6 +111,9 @@ class dipolarApp(QtWidgets.QMainWindow):
                           self.m_setup_tab.m_form.matrix_sus)
 
             self.m_setup_tab.m_field.setFieldData(self.internal_field)
+
+            dim = 3
+            dipolar_sum_core_dll.call_naive_python_call(ctypes.c_int32(dim))
         except:
             print("image not loaded")
         return
