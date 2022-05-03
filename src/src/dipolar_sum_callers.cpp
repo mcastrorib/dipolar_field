@@ -4,9 +4,11 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-void call_naive_python_call(int dim)
+void call_dipolar_sum(
+	double resolution, double external_field, double pore_sus, double matrix_sus, 
+	int dim_x, int dim_y, int dim_z, double* map, double* field)
 {
-	std::cout << "hey python, I'm alive!" << endl;
+	DipolarSum dpsum(resolution, external_field, pore_sus, matrix_sus, dim_x, dim_y, dim_z, map, field);
 }
 
 // int call_make_random_grain_rock_model(
