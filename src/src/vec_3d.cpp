@@ -1,17 +1,14 @@
 #include <cmath>
 #include "vec_3d.h"
 
-Vec3d::Vec3d(double _x, double _y, double _z)
-{
-	this->coords = new double[3];
-	this->coords[0] = _x;
-	this->coords[1] = _y;
-	this->coords[2] = _z;
-}
+Vec3d::Vec3d(double _x, double _y, double _z) : x(_x), y(_y), z(_z)
+{}
 
 Vec3d::Vec3d(const Vec3d &other)
 {
-	this->coords = other.coords;
+	this->x = other.x;
+	this->y = other.y;
+	this->z = other.z;
 }
 
 double Vec3d::norm()

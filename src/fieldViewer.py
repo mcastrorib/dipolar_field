@@ -27,7 +27,7 @@ class fieldViewer():
         # these are the app widgets connected to their slot methods
         titleFont=QtGui.QFont("Arial",15)
         titleFont.setBold(True)
-        self.titleLabel = QtWidgets.QLabel('Image viewer')
+        self.titleLabel = QtWidgets.QLabel('Internal field')
         self.titleLabel.setFont(titleFont)
         self.titleLabel.setAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)        
         self.slideBar = QtWidgets.QSlider(QtCore.Qt.Horizontal)

@@ -6,7 +6,7 @@ class formViewer():
         self.m_widget = _widget
 
         self.resolution = None
-        self.field = None
+        self.external_field = None
         self.pore_sus = None
         self.matrix_sus = None
 
@@ -28,7 +28,7 @@ class formViewer():
         self.imageLabel.setFont(headerFont)
         self.imgResolutionLabel = QtWidgets.QLabel('Resolution:')
         self.imgResolutionLabel.setFont(headerFont)
-        self.imgResolutionLineEdit = QtWidgets.QLineEdit('')
+        self.imgResolutionLineEdit = QtWidgets.QLineEdit('1.0')
         self.imgResolutionLineEdit.setEnabled(True)
         self.imgUnitLabel = QtWidgets.QLabel('um/voxel')
 
@@ -36,7 +36,7 @@ class formViewer():
         self.extFieldLabel.setFont(headerFont)
         self.fieldIntensityLabel = QtWidgets.QLabel('Intensity:')
         self.fieldIntensityLabel.setFont(headerFont)
-        self.fieldIntensityLineEdit = QtWidgets.QLineEdit('')
+        self.fieldIntensityLineEdit = QtWidgets.QLineEdit('250.0')
         self.fieldIntensityLineEdit.setEnabled(True)
 
         self.magneticSusLabel = QtWidgets.QLabel('Magnetic susceptibilities (SI)')
@@ -44,12 +44,12 @@ class formViewer():
 
         self.poreSusLabel = QtWidgets.QLabel('Porous phase:')
         self.poreSusLabel.setFont(headerFont)
-        self.poreSusLineEdit = QtWidgets.QLineEdit('')
+        self.poreSusLineEdit = QtWidgets.QLineEdit('-7e-7')
         self.poreSusLineEdit.setEnabled(True)
 
         self.matSusLabel = QtWidgets.QLabel('Matrix phase:')
         self.matSusLabel.setFont(headerFont)
-        self.matSusLineEdit = QtWidgets.QLineEdit('')
+        self.matSusLineEdit = QtWidgets.QLineEdit('4e-5')
         self.matSusLineEdit.setEnabled(True)
 
         self.runButton = QtWidgets.QPushButton('Generate')
@@ -126,14 +126,17 @@ class formViewer():
 
     # @Slot()
     def runAnalysis(self):
+        self.runButton.setEnabled(False)
         print('running analysis...')
         try:
             self.resolution = float(self.imgResolutionLineEdit.text())
-            self.field = float(self.fieldIntensityLineEdit.text())
+            self.external_field = float(self.fieldIntensityLineEdit.text())
             self.pore_sus = float(self.poreSusLineEdit.text())
             self.matrix_sus = float(self.matSusLineEdit.text())
             self.parent.run()
         except:
             print("could not load form")
+
+        self.runButton.setEnabled(True)
         return
 

@@ -8,8 +8,11 @@
 #endif
 
 #include "pvm_misc.h"
+#include "dipolar_sum.h"
 
-extern "C" DIPOLAR_SUM_CALLERS_API void call_naive_python_call(int dim);
+extern "C" DIPOLAR_SUM_CALLERS_API void call_dipolar_sum(
+	double resolution, double external_field, double pore_sus, double matrix_sus, 
+	int dim_x, int dim_y, int dim_z, double* map, double* field);
 
 // extern "C" DIPOLAR_SUM_CALLERS_API int call_make_random_grain_rock_model(
 // 	int num_families, double* families_data, int dim, int64_pvm resolution, double pixel_size,

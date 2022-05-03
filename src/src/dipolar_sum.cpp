@@ -49,7 +49,7 @@ void DipolarSum::analysis()
 	}
 }
 
-double DipolarSum::dipsum(Vec3d _ref)
+double DipolarSum::dipsum(Vec3d &_ref)
 {
 	double dsum = 0.0;
 	Vec3d ek(0.0, 0.0, 1.0);
@@ -77,7 +77,9 @@ double DipolarSum::dipsum(Vec3d _ref)
 					dist.setY(curr.getY() - _ref.getY());
 					dist.setZ(curr.getZ() - _ref.getZ());
 					norm_dist = dist.norm();					
-					unit = dist.prod(1.0/norm_dist);
+					unit.setX(dist.getX() / norm_dist);
+					unit.setY(dist.getY() / norm_dist);
+					unit.setZ(dist.getZ() / norm_dist);
 					costheta = unit.dot(ek);
 					Biz = this->m_factor * (3.0 * pow(costheta, 2.0) - 1.0);
 					Biz /= pow(norm_dist, 3.0);

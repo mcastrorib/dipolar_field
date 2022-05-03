@@ -16,7 +16,7 @@ from fieldViewer import fieldViewer
 from formViewer import formViewer
 
 dipolar_sum_core_dll = ez_load_dynamic_library(os.path.join(os.path.dirname(__file__), 'bin'), 'dipolar_sum_core')
-dipolar_sum_core_dll.call_naive_python_call.restype = c_void_p
+dipolar_sum_core_dll.call_dipolar_sum.restype = c_void_p
 
 # Inherit from QDialog
 class dipolarApp(QtWidgets.QMainWindow):
@@ -98,34 +98,53 @@ class dipolarApp(QtWidgets.QMainWindow):
     def run(self):
         try:
             self.m_setup_tab.m_viewer.getFullData()
-            print(self.m_setup_tab.m_form.resolution)
-            print(self.m_setup_tab.m_form.field)
-            print(self.m_setup_tab.m_form.pore_sus)
-            print(self.m_setup_tab.m_form.matrix_sus)
-            print(self.m_setup_tab.m_viewer.full_data.shape)
 
-            self.analysis(self.m_setup_tab.m_viewer.full_data, 
-                          self.m_setup_tab.m_form.resolution, 
-                          self.m_setup_tab.m_form.field,
-                          self.m_setup_tab.m_form.pore_sus,
-                          self.m_setup_tab.m_form.matrix_sus)
+            full_data = self.m_setup_tab.m_viewer.full_data
+            resolution = self.m_setup_tab.m_form.resolution
+            external_field = self.m_setup_tab.m_form.external_field
+            pore_sus = self.m_setup_tab.m_form.pore_sus
+            matrix_sus = self.m_setup_tab.m_form.matrix_sus
+            fd_shape = self.m_setup_tab.m_viewer.full_data.shape
 
-            self.m_setup_tab.m_field.setFieldData(self.internal_field)
+            
+            # ct = time.time()
+            # print("Python::")
+            # self.internal_field = np.zeros(fd_shape)
+            # self.analysis(full_data, 
+            #               resolution, 
+            #               external_field,
+            #               pore_sus,
+            #               matrix_sus)
+            # py_time = time.time() - ct
+            # print("Process took", py_time, "seconds")
 
-            dim = 3
-            dipolar_sum_core_dll.call_naive_python_call(ctypes.c_int32(dim))
+
+            ct = time.time()
+            print("Cpp::")
+            cpp_field = np.zeros(fd_shape)
+            dipolar_sum_core_dll.call_dipolar_sum(
+                ctypes.c_double(resolution), ctypes.c_double(external_field), ctypes.c_double(pore_sus), ctypes.c_double(matrix_sus),
+                ctypes.c_int32(fd_shape[2]), ctypes.c_int32(fd_shape[1]), ctypes.c_int32(fd_shape[0]), 
+                ct_array_ptr(full_data), ct_array_ptr(cpp_field))
+            cpp_time = time.time() - ct
+            print("Process took", cpp_time, "seconds")
+
+            # print("python vs. cpp speedup: ", (py_time - cpp_time) / cpp_time)
+            # print(abs(self.internal_field - cpp_field))
+            # print("max value:", abs(self.internal_field - cpp_field).max())
+
+            self.m_setup_tab.m_field.setFieldData(cpp_field)
         except:
             print("image not loaded")
         return
 
     # Method
-    def analysis(self, data: np.ndarray, resolution: float, field: float, pore_sus: float, matrix_sus: float):
+    def analysis(self, data: np.ndarray, resolution: float, external_field: float, pore_sus: float, matrix_sus: float):
         sus_contrast = matrix_sus - pore_sus
-        m_factor = (4.0/3.0) * np.pi * ((0.5*resolution)**3.0) * sus_contrast * field 
+        m_factor = (4.0/3.0) * np.pi * ((0.5*resolution)**3.0) * sus_contrast * external_field 
         dim_z = data.shape[0]
         dim_y = data.shape[1]
         dim_x = data.shape[2]
-        self.internal_field = np.zeros(data.shape)
 
         for z in range(dim_z):
             print('k-slice ', z)
@@ -146,7 +165,6 @@ class dipolarApp(QtWidgets.QMainWindow):
         dim_x = data.shape[2]
        
         for z in range(dim_z):
-            print('i-slice', z)
             for y in range(dim_y):
                 for x in range(dim_x):
                     if(data[z, y, x] > 0):
@@ -156,7 +174,7 @@ class dipolarApp(QtWidgets.QMainWindow):
                         unit_dist = dist / norm_dist
                         costheta = np.dot(unit_dist, ek)
                         Biz = m_factor * (3.0 * costheta**2 - 1.0) / norm_dist**3
-                        dipsum = Biz * norm_dist
+                        dipsum += Biz * norm_dist
 
         return dipsum
 
