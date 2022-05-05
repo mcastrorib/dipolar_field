@@ -92,7 +92,9 @@ class imageViewer():
     def plotImage(self):
         self.figure.clear()
         ax = self.figure.add_subplot(111)
-        img = ax.imshow(self.m_data,vmin=0,vmax=255)      
+        img = ax.imshow(self.m_data,vmin=0,vmax=255)
+        ax.set_xticks([])
+        ax.set_yticks([])          
         self.figure.colorbar(img)
         ax.figure.canvas.draw()
         # self.buttonPlot.setEnabled(False)  

@@ -143,7 +143,7 @@ class dipolarApp(QtWidgets.QMainWindow):
             # print(abs(self.internal_field - cpp_field))
             # print("max value:", abs(self.internal_field - cpp_field).max())
 
-            self.m_setup_tab.m_field.setFieldData(self.internal_field)
+            self.m_setup_tab.m_field.setFieldData(full_data, self.internal_field)
         except:
             print("image not loaded")
         return
