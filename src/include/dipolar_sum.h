@@ -17,7 +17,7 @@ public:
 			   int dim_x, 
 			   int dim_y, 
 			   int dim_z, 
-			   double* map, 
+			   uint8_pvm* map, 
 			   double* field);
 	virtual ~DipolarSum(){ 
 		if(this->points_list.size() > 0)
@@ -34,7 +34,7 @@ private:
 	int dim_x;
 	int dim_y;
 	int dim_z;
-	double* map;
+	uint8_pvm* map;
 	double* field;
 	double sus_contrast;
 	double m_factor;

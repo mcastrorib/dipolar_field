@@ -28,4 +28,4 @@ class ProgressBar
         double neededProgress; //I would recommend NOT changing this
 };
 
-#endif
+#endif // !PROGRESSBAR_H

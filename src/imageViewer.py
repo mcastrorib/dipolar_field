@@ -168,7 +168,7 @@ class imageViewer():
                     print("The file does not exist") 
 
     def getFullData(self):
-        self.full_data = np.zeros((len(self.m_map), self.m_data.shape[0], self.m_data.shape[1]))
+        self.full_data = np.zeros((len(self.m_map), self.m_data.shape[0], self.m_data.shape[1]), dtype='uint8')
         for index, file in enumerate(self.m_map):
             self.loadImageData(file, False)
             self.full_data[index] = np.copy(self.m_data)
