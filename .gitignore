@@ -1,4 +1,6 @@
 /venv
 /db/
+/imgs/
 /src/__pycache__
-/src/setupScreen.py
+/src/obj
+/srs/bin
