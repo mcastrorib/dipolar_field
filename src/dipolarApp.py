@@ -30,7 +30,7 @@ class dipolarApp(QtWidgets.QMainWindow):
         # Set app title 
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.setWindowTitle(app_name) 
-        self.setWindowIcon(QtGui.QIcon('icons/app.png')) 
+        self.setWindowIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), '..', 'icons', 'app.png'))) 
         
         # Set geometry and minimum size
         self.setGeometry(100, 100, 1300, 600) 
@@ -101,6 +101,8 @@ class dipolarApp(QtWidgets.QMainWindow):
 
             full_data = self.m_setup_tab.m_viewer.full_data
             resolution = self.m_setup_tab.m_form.resolution
+            bc = self.m_setup_tab.m_form.bc
+            bc_flag = None
             external_field = self.m_setup_tab.m_form.external_field
             pore_sus = self.m_setup_tab.m_form.pore_sus
             matrix_sus = self.m_setup_tab.m_form.matrix_sus
@@ -109,9 +111,10 @@ class dipolarApp(QtWidgets.QMainWindow):
             
             # ct = time.time()
             # print("Python::")
-            # self.internal_field = np.zeros(fd_shape)
+            # py_field = np.zeros(fd_shape)
             # self.analysis(full_data, 
-            #               resolution, 
+            #               py_field,
+            #               resolution,
             #               external_field,
             #               pore_sus,
             #               matrix_sus)
@@ -119,13 +122,20 @@ class dipolarApp(QtWidgets.QMainWindow):
             # print("Process took", py_time, "seconds")
 
 
-            ct = time.time()
             print("Cpp::")
-            cpp_field = np.zeros(fd_shape)
+            ct = time.time()
+            self.internal_field = np.zeros(fd_shape)
+
+            if(bc == 'volume'):
+                bc_flag = False
+            elif(bc == 'periodic'):
+                bc_flag = True
             dipolar_sum_core_dll.call_dipolar_sum(
-                ctypes.c_double(resolution), ctypes.c_double(external_field), ctypes.c_double(pore_sus), ctypes.c_double(matrix_sus),
+                ctypes.c_double(resolution), ctypes.c_bool(bc_flag), 
+                ctypes.c_double(external_field), ctypes.c_double(pore_sus), ctypes.c_double(matrix_sus),
                 ctypes.c_int32(fd_shape[2]), ctypes.c_int32(fd_shape[1]), ctypes.c_int32(fd_shape[0]), 
-                ct_array_ptr(full_data), ct_array_ptr(cpp_field))
+                ct_array_ptr(full_data), ct_array_ptr(self.internal_field))
+
             cpp_time = time.time() - ct
             print("Process took", cpp_time, "seconds")
 
@@ -133,27 +143,27 @@ class dipolarApp(QtWidgets.QMainWindow):
             # print(abs(self.internal_field - cpp_field))
             # print("max value:", abs(self.internal_field - cpp_field).max())
 
-            self.m_setup_tab.m_field.setFieldData(cpp_field)
+            self.m_setup_tab.m_field.setFieldData(self.internal_field)
         except:
             print("image not loaded")
         return
 
     # Method
-    def analysis(self, data: np.ndarray, resolution: float, external_field: float, pore_sus: float, matrix_sus: float):
-        sus_contrast = matrix_sus - pore_sus
-        m_factor = (4.0/3.0) * np.pi * ((0.5*resolution)**3.0) * sus_contrast * external_field 
-        dim_z = data.shape[0]
-        dim_y = data.shape[1]
-        dim_x = data.shape[2]
+    def analysis(self, data: np.ndarray, res_field: np.ndarray, resolution: float, external_field: float, pore_sus: float, matrix_sus: float):
+        if(data.shape == res_field.shape and len(data.shape) == 3):
+            sus_contrast = matrix_sus - pore_sus
+            m_factor = (4.0/3.0) * np.pi * ((0.5*resolution)**3.0) * sus_contrast * external_field 
+            dim_z = data.shape[0]
+            dim_y = data.shape[1]
+            dim_x = data.shape[2]
 
-        for z in range(dim_z):
-            print('k-slice ', z)
-            for y in range(dim_y):
-                for x in range(dim_x):
-                    if(data[z, y, x] == 0):
-                        point = resolution * np.array([x, y, z])
-                        self.internal_field[z, y, x] = self.dipolarSum(data, point, m_factor, resolution) 
-
+            for z in range(dim_z):
+                print('k-slice ', z)
+                for y in range(dim_y):
+                    for x in range(dim_x):
+                        if(data[z, y, x] == 0):
+                            point = resolution * np.array([x, y, z])
+                            res_field[z, y, x] = self.dipolarSum(data, point, m_factor, resolution)
         return
 
     # Method 
