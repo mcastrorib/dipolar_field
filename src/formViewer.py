@@ -1,4 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets 
+import numpy as np
 
 class formViewer():
     def __init__(self, _parent, _widget):
@@ -6,6 +7,7 @@ class formViewer():
         self.m_widget = _widget
 
         self.resolution = None
+        self.bc = None
         self.external_field = None
         self.pore_sus = None
         self.matrix_sus = None
@@ -30,14 +32,22 @@ class formViewer():
         self.imgResolutionLabel.setFont(headerFont)
         self.imgResolutionLineEdit = QtWidgets.QLineEdit('1.0')
         self.imgResolutionLineEdit.setEnabled(True)
-        self.imgUnitLabel = QtWidgets.QLabel('um/voxel')
+        self.imgUnitBox = QtWidgets.QComboBox()
+        self.imgUnitBox.addItems(['um/voxel', 'cm/voxel'])
 
-        self.extFieldLabel = QtWidgets.QLabel('External magnetic field (T):')
+        self.imgBCLabel = QtWidgets.QLabel('Boundaries:')
+        self.imgBCLabel.setFont(headerFont)
+        self.imgBCBox = QtWidgets.QComboBox()
+        self.imgBCBox.addItems(['periodic', 'volume'])
+
+        self.extFieldLabel = QtWidgets.QLabel('External magnetic field:')
         self.extFieldLabel.setFont(headerFont)
         self.fieldIntensityLabel = QtWidgets.QLabel('Intensity:')
         self.fieldIntensityLabel.setFont(headerFont)
         self.fieldIntensityLineEdit = QtWidgets.QLineEdit('250.0')
-        self.fieldIntensityLineEdit.setEnabled(True)
+        self.fieldIntensityLineEdit.setEnabled(True)        
+        self.fieldIntensityUnitBox = QtWidgets.QComboBox()
+        self.fieldIntensityUnitBox.addItems(['Tesla', 'Gauss'])
 
         self.magneticSusLabel = QtWidgets.QLabel('Magnetic susceptibilities (SI)')
         self.magneticSusLabel.setFont(headerFont)
@@ -46,11 +56,15 @@ class formViewer():
         self.poreSusLabel.setFont(headerFont)
         self.poreSusLineEdit = QtWidgets.QLineEdit('-7e-7')
         self.poreSusLineEdit.setEnabled(True)
+        self.poreSusUnitBox = QtWidgets.QComboBox()
+        self.poreSusUnitBox.addItems(['SI', r'emu/cm³'])        
 
         self.matSusLabel = QtWidgets.QLabel('Matrix phase:')
         self.matSusLabel.setFont(headerFont)
         self.matSusLineEdit = QtWidgets.QLineEdit('4e-5')
         self.matSusLineEdit.setEnabled(True)
+        self.matSusUnitBox = QtWidgets.QComboBox()
+        self.matSusUnitBox.addItems(['SI', r'emu/cm³'])        
 
         self.runButton = QtWidgets.QPushButton('Generate')
         self.runButton.clicked.connect(self.runAnalysis)
@@ -70,15 +84,21 @@ class formViewer():
         layoutImgResolution = QtWidgets.QHBoxLayout()
         layoutImgResolution.addWidget(self.imgResolutionLabel)
         layoutImgResolution.addWidget(self.imgResolutionLineEdit)
-        layoutImgResolution.addWidget(self.imgUnitLabel)
+        layoutImgResolution.addWidget(self.imgUnitBox)
         layoutImgResolution.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))
+
+        layoutImgBC = QtWidgets.QHBoxLayout()
+        layoutImgBC.addWidget(self.imgBCLabel)
+        layoutImgBC.addWidget(self.imgBCBox)
+        layoutImgBC.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))
 
         layoutExternalField = QtWidgets.QHBoxLayout()
         layoutExternalField.addWidget(self.extFieldLabel)
 
         layoutFieldIntensity = QtWidgets.QHBoxLayout()
         layoutFieldIntensity.addWidget(self.fieldIntensityLabel)
-        layoutFieldIntensity.addWidget(self.fieldIntensityLineEdit)
+        layoutFieldIntensity.addWidget(self.fieldIntensityLineEdit)   
+        layoutFieldIntensity.addWidget(self.fieldIntensityUnitBox)
         layoutFieldIntensity.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))
 
         layoutMagSus = QtWidgets.QHBoxLayout()
@@ -86,12 +106,14 @@ class formViewer():
         
         layoutPoreSus = QtWidgets.QHBoxLayout()
         layoutPoreSus.addWidget(self.poreSusLabel)
-        layoutPoreSus.addWidget(self.poreSusLineEdit) 
+        layoutPoreSus.addWidget(self.poreSusLineEdit)   
+        layoutPoreSus.addWidget(self.poreSusUnitBox) 
         layoutPoreSus.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))   
         
         layoutMatrixSus = QtWidgets.QHBoxLayout()
         layoutMatrixSus.addWidget(self.matSusLabel)
         layoutMatrixSus.addWidget(self.matSusLineEdit)
+        layoutMatrixSus.addWidget(self.matSusUnitBox) 
         layoutMatrixSus.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))   
 
         layoutRunButton = QtWidgets.QHBoxLayout()
@@ -104,6 +126,7 @@ class formViewer():
 
         essentialsLayout.addLayout(layoutImage)
         essentialsLayout.addLayout(layoutImgResolution)
+        essentialsLayout.addLayout(layoutImgBC)
         essentialsLayout.addWidget(QtWidgets.QLabel(''))
         essentialsLayout.addLayout(layoutExternalField)
         essentialsLayout.addLayout(layoutFieldIntensity)
@@ -129,10 +152,7 @@ class formViewer():
         self.runButton.setEnabled(False)
         print('running analysis...')
         try:
-            self.resolution = float(self.imgResolutionLineEdit.text())
-            self.external_field = float(self.fieldIntensityLineEdit.text())
-            self.pore_sus = float(self.poreSusLineEdit.text())
-            self.matrix_sus = float(self.matSusLineEdit.text())
+            self.readFormData()
             self.parent.run()
         except:
             print("could not load form")
@@ -140,3 +160,24 @@ class formViewer():
         self.runButton.setEnabled(True)
         return
 
+    def readFormData(self):
+        # Convert to gaussian units
+        self.resolution = float(self.imgResolutionLineEdit.text())
+        if(self.imgUnitBox.currentText() == 'um/voxel'):
+            self.resolution *= 1.0e-4
+
+        self.bc = self.imgBCBox.currentText()
+        
+        self.external_field = float(self.fieldIntensityLineEdit.text())
+        if(self.fieldIntensityUnitBox.currentText() == 'Tesla'):
+            self.external_field *= 1.0e4
+
+        self.pore_sus = float(self.poreSusLineEdit.text())
+        if(self.poreSusUnitBox.currentText() == 'SI'):
+            self.pore_sus /= 4.0*np.pi 
+
+        self.matrix_sus = float(self.matSusLineEdit.text())
+        if(self.matSusUnitBox.currentText() == 'SI'):
+            self.matrix_sus /= 4.0*np.pi
+
+        return
