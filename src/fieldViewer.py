@@ -53,6 +53,9 @@ class fieldViewer():
         self.vizBox = QtWidgets.QComboBox()
         self.vizBox.addItems(['field', 'gradients', 'distribution'])
         self.vizBox.setEnabled(False)     
+        self.maskBox = QtWidgets.QComboBox()
+        self.maskBox.addItems(['pore', 'grain', 'all'])
+        self.maskBox.setEnabled(False)
         self.buttonViz = QtWidgets.QPushButton('View')
         self.buttonViz.setMinimumSize(QtCore.QSize(50, 40))
         self.buttonViz.setEnabled(False)
@@ -67,22 +70,27 @@ class fieldViewer():
         mainLayout.addWidget(self.toolbar)
         layoutH2 = QtWidgets.QHBoxLayout()
         layoutH3 = QtWidgets.QHBoxLayout()
+        layoutH4 = QtWidgets.QHBoxLayout() 
         layoutH2.addWidget(self.buttonMinus)        
         layoutH2.addWidget(self.slideBar)        
         layoutH2.addWidget(self.buttonPlus)  
         layoutH3.addWidget(self.labelDimensions)
         layoutH3.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))
-        layoutH3.addWidget(self.vizBox)
-        layoutH3.addWidget(self.buttonViz)
         layoutH3.addWidget(self.buttonSave)
         layoutH3.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))
         layoutH3.addWidget(self.labelSliceId)
+        layoutH4.addWidget(self.vizBox)
+        layoutH4.addWidget(self.maskBox)
+        layoutH4.addWidget(self.buttonViz)
         mainLayout.addWidget(self.canvas, QtWidgets.QSizePolicy.MinimumExpanding)
         mainLayout.addLayout(layoutH2)
         mainLayout.addLayout(layoutH3)   
+        mainLayout.addLayout(layoutH4)   
         mainLayout.setAlignment(QtCore.Qt.AlignTop)   
 
         # initialize the main image data
+        self.m_map = None # numpy array
+        self.m_mask = None # numpy array
         self.m_data = None # numpy array
         self.m_image = None # QImage object
         self.clim = None # numpy array
@@ -104,9 +112,15 @@ class fieldViewer():
 
     # @Slot()
     def plotImage(self, _slice):
+        self.m_mask = 1.0
+        if(self.maskBox.currentText() == 'pore'):
+            self.m_mask = np.where(self.m_map[_slice] == 0, True, False)
+        elif(self.maskBox.currentText() == 'grain'):
+            self.m_mask = np.where(self.m_map[_slice] == 0, False, True)
+        
         self.figure.clear()
         ax = self.figure.add_subplot(111)
-        img = ax.imshow(self.m_data[_slice]) 
+        img = ax.imshow(self.m_mask * self.m_data[_slice]) 
         ax.set_xticks([])
         ax.set_yticks([])    
         img.set_cmap(self.cmap)
@@ -118,16 +132,19 @@ class fieldViewer():
         return
 
     def plotDist(self):
-        self.figure.clear()
-        ax = self.figure.add_subplot(111)
-        heights = self.field_dist[0]
-        widths = self.field_dist[1][1:] - self.field_dist[1][:-1]
-        l_edges = self.field_dist[1][:-1]
-        img = ax.bar(l_edges, heights, widths, align='edge')
-        ax.set_xlabel('Field Gradient (Gauss/cm)')
-        ax.set_ylabel('Volume fraction')
-        ax.figure.canvas.draw()
-        self.figure.tight_layout()
+        try:
+            self.figure.clear()
+            ax = self.figure.add_subplot(111)
+            heights = self.field_dist[0]
+            widths = self.field_dist[1][1:] - self.field_dist[1][:-1]
+            l_edges = self.field_dist[1][:-1]
+            print(l_edges, heights, widths)
+            img = ax.bar(l_edges, heights, widths, align='edge')
+            ax.set_xlabel('Field Gradient (Gauss/cm)')
+            ax.set_ylabel('Volume fraction')
+            ax.figure.canvas.draw()
+        except:
+            print('could not load distribution')
         return
 
     # @Slot()
@@ -179,10 +196,6 @@ class fieldViewer():
             self.plotImage(_slice)
         return
 
-    def saveFieldData(self):
-        print("Image to be saved")
-        return
-
     def changeDataViz(self):
         print("Changing dataviz")
         if(self.vizBox.currentText() == 'distribution'):
@@ -202,6 +215,7 @@ class fieldViewer():
 
     # Method
     def setFieldData(self, full_img, field, grads):
+        self.m_map = full_img
         self.field_data = field
         self.field_grads = grads
         self.field_lims = np.array([-1, 1]) * np.abs([field.max(), field.min()]).max()
@@ -212,21 +226,22 @@ class fieldViewer():
         self.cmap = 'seismic'
 
         self.vizBox.setEnabled(True)
+        self.maskBox.setEnabled(True)
         self.buttonViz.setEnabled(True)
         self.buttonSave.setEnabled(True)
-        self.getFieldDist(full_img)
         self.loadFieldViz()
+
+        self.getFieldDist()
         return
 
-    def getFieldDist(self, full_img):
+    def getFieldDist(self):
         # get true points
         pore_voxels = []
-        for z in range(full_img.shape[0]):
-            for y in range(full_img.shape[1]):
-                for x in range(full_img.shape[2]):
-                    if(full_img[z,y,x] == 0):
-                        pore_voxels.append(self.field_data[z,y,x])
-
+        for z in range(self.m_map.shape[0]):
+            for y in range(self.m_map.shape[1]):
+                for x in range(self.m_map.shape[2]):
+                    if(self.m_map[z,y,x] == 0):
+                        pore_voxels.append(self.field_grads[z,y,x])
 
         self.field_dist = []
         bins = 32

@@ -117,7 +117,11 @@ class dipolarApp(QtWidgets.QMainWindow):
                 bc_flag = False
             elif(bc == 'periodic'):
                 bc_flag = True
+        except:
+            print('image not loaded')
+            return
 
+        try:
             print("Cpp::computing_field")
             ct = time.time()
             dipolar_sum_core_dll.call_dipolar_sum(
@@ -127,7 +131,11 @@ class dipolarApp(QtWidgets.QMainWindow):
                 ct_array_ptr(full_data), ct_array_ptr(self.internal_field))
             cpp_time = time.time() - ct
             print("Process took", cpp_time, "seconds")
+        except:
+            print('could not compute magnetic field')
+            return
 
+        try:
             print("Cpp::computing_grads")
             ct = time.time()
             dipolar_sum_core_dll.call_field_gradient(
@@ -136,12 +144,16 @@ class dipolarApp(QtWidgets.QMainWindow):
                 ct_array_ptr(full_data), ct_array_ptr(self.internal_field), ct_array_ptr(self.internal_grads))
             cpp_time = time.time() - ct
             print("Process took", cpp_time, "seconds")
+        except:
+            print("could not compute field gradient")
+            return
 
-            print('field:\n', self.internal_field)
-            print('grads:\n', self.internal_grads)
+        try:
             self.m_setup_tab.m_field.setFieldData(full_data, self.internal_field, self.internal_grads)
         except:
-            print("image not loaded")
+            print("could not show results")
+            return
+
         return
 
     # Method
