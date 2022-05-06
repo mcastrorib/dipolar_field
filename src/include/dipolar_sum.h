@@ -37,13 +37,14 @@ private:
 	uint8_pvm* map;
 	double* field;
 	double sus_contrast;
-	double m_factor;
+	double m_pore;
+	double m_grain;
 	vector<Vec3d> points_list;
 
 	void analysis_volume();
-	double dipsum_volume(Vec3d &_ref);
+	double dipsum_volume(Vec3d &_ref, double m_factor);
 	void analysis_periodic();
-	double dipsum_periodic(Vec3d &_ref);
+	double dipsum_periodic(Vec3d &_ref, double m_factor);
 	void update_points_list(Vec3d &_ref);
 };
 

@@ -23,7 +23,8 @@ DipolarSum::DipolarSum(double resolution,
 {
 	vector<Vec3d> points_list();
 	this->sus_contrast = this->matrix_sus - this->pore_sus;
-	this->m_factor = ((4.0/3.0) * M_PI *  pow(0.5 * this->resolution, 3.0) * this->sus_contrast * this->external_field);
+	this->m_pore = ((4.0/3.0) * M_PI *  pow(0.5 * this->resolution, 3.0) * this->sus_contrast * this->external_field);
+	this->m_grain = ((8.0/3.0) * M_PI *  pow(0.5 * this->resolution, 3.0) * this->matrix_sus * this->external_field);
 }
 
 void DipolarSum::run(bool _periodicBC)
@@ -45,13 +46,14 @@ void DipolarSum::analysis_volume()
 			for(int x = 0; x < this->dim_x; x++)
 			{
 				index = PY2C_IDX3D(x, y, z, this->dim_x, this->dim_y);
+				ref.setX(this->resolution * (double) x);
+				ref.setY(this->resolution * (double) y);
+				ref.setZ(this->resolution * (double) z);
+
 				if(this->map[index] == 0)
-				{
-					ref.setX(this->resolution * (double) x);
-					ref.setY(this->resolution * (double) y);
-					ref.setZ(this->resolution * (double) z);
-					this->field[index] = (*this).dipsum_volume(ref);
-				}
+					this->field[index] = (*this).dipsum_volume(ref, this->m_pore);
+				else
+					this->field[index] = (*this).dipsum_volume(ref, this->m_grain);
 			}
 		}
 		// update progress bar
@@ -61,7 +63,7 @@ void DipolarSum::analysis_volume()
 	cout << endl;
 }
 
-double DipolarSum::dipsum_volume(Vec3d &_ref)
+double DipolarSum::dipsum_volume(Vec3d &_ref, double m_factor)
 {
 	double dsum = 0.0;
 	Vec3d ek(0.0, 0.0, 1.0);
@@ -89,12 +91,12 @@ double DipolarSum::dipsum_volume(Vec3d &_ref)
 					dist.setY(curr.getY() - _ref.getY());
 					dist.setZ(curr.getZ() - _ref.getZ());
 					norm_dist = dist.norm();					
-					unit.setX(dist.getX() / norm_dist);
-					unit.setY(dist.getY() / norm_dist);
-					unit.setZ(dist.getZ() / norm_dist);
+					unit.setX(dist.getX() / (norm_dist + 1e-20));
+					unit.setY(dist.getY() / (norm_dist + 1e-20));
+					unit.setZ(dist.getZ() / (norm_dist + 1e-20));
 					costheta = unit.dot(ek);
-					Biz = this->m_factor * (3.0 * pow(costheta, 2.0) - 1.0);
-					Biz /= pow(norm_dist, 3.0);
+					Biz = m_factor * (3.0 * pow(costheta, 2.0) - 1.0);
+					Biz /= pow((norm_dist + 1e-20), 3.0);
 					dsum += Biz * norm_dist;
 				}
 			}
@@ -123,13 +125,13 @@ void DipolarSum::analysis_periodic()
 			for(int x = 0; x < this->dim_x; x++)
 			{
 				index = PY2C_IDX3D(x, y, z, this->dim_x, this->dim_y);
-				if(this->map[index] == 0)
-				{
-					ref.setX(this->resolution * (double) x);
-					ref.setY(this->resolution * (double) y);
-					ref.setZ(this->resolution * (double) z);
-					this->field[index] = (*this).dipsum_periodic(ref);
-				}
+				ref.setX(this->resolution * (double) x);
+				ref.setY(this->resolution * (double) y);
+				ref.setZ(this->resolution * (double) z);
+				if(this->map[index] == 0)	
+					this->field[index] = (*this).dipsum_periodic(ref, this->m_pore);
+				else
+					this->field[index] = (*this).dipsum_periodic(ref, this->m_grain);
 			}
 		}
 		// update progress bar
@@ -139,7 +141,7 @@ void DipolarSum::analysis_periodic()
 	cout << endl;
 }
 
-double DipolarSum::dipsum_periodic(Vec3d &_ref)
+double DipolarSum::dipsum_periodic(Vec3d &_ref, double m_factor)
 {
 	double dsum = 0.0;
 	Vec3d ek(0.0, 0.0, 1.0);
@@ -171,12 +173,12 @@ double DipolarSum::dipsum_periodic(Vec3d &_ref)
 						dist.setY(this->resolution * this->points_list[idx].getY() - _ref.getY());
 						dist.setZ(this->resolution * this->points_list[idx].getZ() - _ref.getZ());
 						norm_dist = dist.norm();					
-						unit.setX(dist.getX() / norm_dist);
-						unit.setY(dist.getY() / norm_dist);
-						unit.setZ(dist.getZ() / norm_dist);
+						unit.setX(dist.getX() / (norm_dist + 1e-20));
+						unit.setY(dist.getY() / (norm_dist + 1e-20));
+						unit.setZ(dist.getZ() / (norm_dist + 1e-20));
 						costheta = unit.dot(ek);
-						Biz = this->m_factor * (3.0 * pow(costheta, 2.0) - 1.0);
-						Biz /= pow(norm_dist, 3.0);
+						Biz = m_factor * (3.0 * pow(costheta, 2.0) - 1.0);
+						Biz /= pow((norm_dist + 1e-20), 3.0);
 						dsum += Biz * norm_dist;
 					}
 				}
