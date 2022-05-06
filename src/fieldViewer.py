@@ -51,7 +51,7 @@ class fieldViewer():
         self.buttonSave.setEnabled(False)
         self.buttonSave.clicked.connect(self.saveFieldData)
         self.vizBox = QtWidgets.QComboBox()
-        self.vizBox.addItems(['field', 'distribution'])
+        self.vizBox.addItems(['field', 'gradients', 'distribution'])
         self.vizBox.setEnabled(False)     
         self.buttonViz = QtWidgets.QPushButton('View')
         self.buttonViz.setMinimumSize(QtCore.QSize(50, 40))
@@ -85,9 +85,14 @@ class fieldViewer():
         # initialize the main image data
         self.m_data = None # numpy array
         self.m_image = None # QImage object
+        self.clim = None # numpy array
+        self.cmap = None # matplotlib cmap object
         self.field_data = None # numpy array
-        self.field_lims = None
-        self.field_dist = None
+        self.field_grads = None # numpy array
+        self.field_lims = None # numpy array
+        self.field_dist = None # list with numpy arrays of amps, bins
+        self.grads_lims = None # numpy array
+
     
     def clear(self):
         self.__del__()
@@ -98,15 +103,16 @@ class fieldViewer():
         self.m_image = None
 
     # @Slot()
-    def plotImage(self):
+    def plotImage(self, _slice):
         self.figure.clear()
         ax = self.figure.add_subplot(111)
-        img = ax.imshow(self.m_data) 
+        img = ax.imshow(self.m_data[_slice]) 
         ax.set_xticks([])
         ax.set_yticks([])    
-        img.set_cmap('seismic') 
+        img.set_cmap(self.cmap)
+        # img.set_cmap('seismic') 
         self.figure.colorbar(img)
-        img.set_clim(self.field_lims)
+        img.set_clim(self.clim)
         ax.figure.canvas.draw()
         # self.buttonPlot.setEnabled(False)  
         return
@@ -168,10 +174,9 @@ class fieldViewer():
 
     # method
     def loadImageData(self, _slice, _updateWindow):
-        self.m_data = self.field_data[_slice]
         if _updateWindow:
-            self.labelDimensions.setText("[h="+str(self.m_data.shape[0])+",w="+str(self.m_data.shape[1])+"]")
-            self.plotImage()
+            self.labelDimensions.setText("[h="+str(self.m_data[_slice].shape[0])+",w="+str(self.m_data[_slice].shape[1])+"]")
+            self.plotImage(_slice)
         return
 
     def saveFieldData(self):
@@ -180,17 +185,32 @@ class fieldViewer():
 
     def changeDataViz(self):
         print("Changing dataviz")
-        if(self.vizBox.currentText() == 'field'):
-            self.loadFieldViz()
-        elif(self.vizBox.currentText() == 'distribution'):
+        if(self.vizBox.currentText() == 'distribution'):
             self.loadDistViz()
+        elif(self.vizBox.currentText() == 'field'):
+            self.m_data = self.field_data
+            self.clim = self.field_lims
+            self.cmap = 'seismic'
+            self.loadFieldViz()
+        elif(self.vizBox.currentText() == 'gradients'):
+            self.m_data = self.field_grads
+            self.clim = self.grads_lims
+            self.cmap = 'viridis'
+            self.loadFieldViz()
         return
     
 
     # Method
-    def setFieldData(self, full_img, field):
+    def setFieldData(self, full_img, field, grads):
         self.field_data = field
+        self.field_grads = grads
         self.field_lims = np.array([-1, 1]) * np.abs([field.max(), field.min()]).max()
+        self.grads_lims = np.array([0, grads.max()])
+        
+        self.m_data = self.field_data
+        self.clim = self.field_lims
+        self.cmap = 'seismic'
+
         self.vizBox.setEnabled(True)
         self.buttonViz.setEnabled(True)
         self.buttonSave.setEnabled(True)

@@ -17,6 +17,8 @@ from formViewer import formViewer
 
 dipolar_sum_core_dll = ez_load_dynamic_library(os.path.join(os.path.dirname(__file__), 'bin'), 'dipolar_sum_core')
 dipolar_sum_core_dll.call_dipolar_sum.restype = c_void_p
+dipolar_sum_core_dll.call_field_gradient.restype = c_void_p
+
 
 # Inherit from QDialog
 class dipolarApp(QtWidgets.QMainWindow):
@@ -108,42 +110,36 @@ class dipolarApp(QtWidgets.QMainWindow):
             matrix_sus = self.m_setup_tab.m_form.matrix_sus
             fd_shape = self.m_setup_tab.m_viewer.full_data.shape
 
-            
-            # ct = time.time()
-            # print("Python::")
-            # py_field = np.zeros(fd_shape)
-            # self.analysis(full_data, 
-            #               py_field,
-            #               resolution,
-            #               external_field,
-            #               pore_sus,
-            #               matrix_sus)
-            # py_time = time.time() - ct
-            # print("Process took", py_time, "seconds")
-
-
-            print("Cpp::")
-            ct = time.time()
             self.internal_field = np.zeros(fd_shape)
+            self.internal_grads = np.zeros(fd_shape)
 
             if(bc == 'volume'):
                 bc_flag = False
             elif(bc == 'periodic'):
                 bc_flag = True
+
+            print("Cpp::computing_field")
+            ct = time.time()
             dipolar_sum_core_dll.call_dipolar_sum(
                 ctypes.c_double(resolution), ctypes.c_bool(bc_flag), 
                 ctypes.c_double(external_field), ctypes.c_double(pore_sus), ctypes.c_double(matrix_sus),
                 ctypes.c_int32(fd_shape[2]), ctypes.c_int32(fd_shape[1]), ctypes.c_int32(fd_shape[0]), 
                 ct_array_ptr(full_data), ct_array_ptr(self.internal_field))
-
             cpp_time = time.time() - ct
             print("Process took", cpp_time, "seconds")
 
-            # print("python vs. cpp speedup: ", (py_time - cpp_time) / cpp_time)
-            # print(abs(self.internal_field - cpp_field))
-            # print("max value:", abs(self.internal_field - cpp_field).max())
+            print("Cpp::computing_grads")
+            ct = time.time()
+            dipolar_sum_core_dll.call_field_gradient(
+                ctypes.c_double(resolution), ctypes.c_bool(bc_flag), 
+                ctypes.c_int32(fd_shape[2]), ctypes.c_int32(fd_shape[1]), ctypes.c_int32(fd_shape[0]), 
+                ct_array_ptr(full_data), ct_array_ptr(self.internal_field), ct_array_ptr(self.internal_grads))
+            cpp_time = time.time() - ct
+            print("Process took", cpp_time, "seconds")
 
-            self.m_setup_tab.m_field.setFieldData(full_data, self.internal_field)
+            print('field:\n', self.internal_field)
+            print('grads:\n', self.internal_grads)
+            self.m_setup_tab.m_field.setFieldData(full_data, self.internal_field, self.internal_grads)
         except:
             print("image not loaded")
         return

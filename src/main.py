@@ -1,8 +1,5 @@
 """
-A simple GUI that allows to load and visualize a stack of images (slices)
-from micro-computed tomography and run random-walk based NMR simulations.
-Basic current capabilities:
-
+A simple GUI app to generate magnetic internal fields based on the dipolar sum method
 """
 import os
 import sys
