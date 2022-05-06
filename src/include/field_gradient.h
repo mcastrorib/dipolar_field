@@ -33,7 +33,9 @@ private:
 	void gradient_periodic();
 	void gradient_volume();
 	double derivative_3pt_centered(int x, int y, int z, double ds);
-	double derivative_3pt_centered_border(int x, int y, int z, double ds);
+	double derivative_3pt_centered_border(int x, int y, int z, double ds);	
+	double derivative_3pt_tail_border(int x, int y, int z, double ds);
+	void print_point(int x, int y, int z);
 };
 
 #endif // !FIELD_GRADIENT_H
