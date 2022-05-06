@@ -132,19 +132,15 @@ class fieldViewer():
         return
 
     def plotDist(self):
-        try:
-            self.figure.clear()
-            ax = self.figure.add_subplot(111)
-            heights = self.field_dist[0]
-            widths = self.field_dist[1][1:] - self.field_dist[1][:-1]
-            l_edges = self.field_dist[1][:-1]
-            print(l_edges, heights, widths)
-            img = ax.bar(l_edges, heights, widths, align='edge')
-            ax.set_xlabel('Field Gradient (Gauss/cm)')
-            ax.set_ylabel('Volume fraction')
-            ax.figure.canvas.draw()
-        except:
-            print('could not load distribution')
+        self.figure.clear()
+        ax = self.figure.add_subplot(111)
+        heights = self.field_dist[0]
+        widths = self.field_dist[1][1:] - self.field_dist[1][:-1]
+        l_edges = self.field_dist[1][:-1]
+        img = ax.bar(l_edges, heights, widths, align='edge')
+        ax.set_xlabel('Field Gradient (Gauss/cm)')
+        ax.set_ylabel('Volume fraction')
+        ax.figure.canvas.draw()
         return
 
     # @Slot()
@@ -197,7 +193,6 @@ class fieldViewer():
         return
 
     def changeDataViz(self):
-        print("Changing dataviz")
         if(self.vizBox.currentText() == 'distribution'):
             self.loadDistViz()
         elif(self.vizBox.currentText() == 'field'):
@@ -208,7 +203,7 @@ class fieldViewer():
         elif(self.vizBox.currentText() == 'gradients'):
             self.m_data = self.field_grads
             self.clim = self.grads_lims
-            self.cmap = 'viridis'
+            self.cmap = 'Greys'
             self.loadFieldViz()
         return
     
