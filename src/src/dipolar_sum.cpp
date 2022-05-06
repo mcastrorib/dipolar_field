@@ -12,14 +12,14 @@ DipolarSum::DipolarSum(double resolution,
 					   int dim_z, 
 					   uint8_pvm* map, 
 					   double* field) : resolution(resolution),
-					   					external_field(external_field),
-					   					pore_sus(pore_sus),
-					   					matrix_sus(matrix_sus),
-					   					dim_x(dim_x),
-					   					dim_y(dim_y),
-					   					dim_z(dim_z),
-					   					map(map),
-					   					field(field)
+						   				external_field(external_field),
+						   				pore_sus(pore_sus),
+						   				matrix_sus(matrix_sus),
+						   				dim_x(dim_x),
+						   				dim_y(dim_y),
+						   				dim_z(dim_z),
+						   				map(map),
+						   				field(field)
 {
 	vector<Vec3d> points_list();
 	this->sus_contrast = this->matrix_sus - this->pore_sus;
@@ -210,3 +210,5 @@ void DipolarSum::update_points_list(Vec3d &_ref)
 
 	return;
 }
+
+
