@@ -262,13 +262,13 @@ class fieldViewer():
         # Save image data in RAW format
         raw_filename = my_file + '.raw'
         with open(os.path.join(filename[0], raw_filename), "bw") as file_raw:
-            dimensions.tofile(file_raw)
+            field_dims.tofile(file_raw)
             self.field_data.tofile(file_raw)
 
         # Save image data in TXT format
         txt_filename = my_file + '.txt'    
         with open(os.path.join(filename[0], txt_filename), "w") as file_txt:
-            dimensions.tofile(file_txt, sep=',')
+            field_dims.tofile(file_txt, sep=',')
             file_txt.write('\n')
             self.field_data.tofile(file_txt, sep=',')
 
