@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib
 from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg, NavigationToolbar2QT)
@@ -48,7 +49,11 @@ class imageViewer():
         self.buttonLoad = QtWidgets.QPushButton('Open')
         self.buttonLoad.setMinimumSize(QtCore.QSize(50, 40))
         self.buttonLoad.setEnabled(True)
-        self.buttonLoad.clicked.connect(self.openImage)     
+        self.buttonLoad.clicked.connect(self.openImage)        
+        self.buttonSave = QtWidgets.QPushButton('Save')
+        self.buttonSave.setMinimumSize(QtCore.QSize(50, 40))
+        self.buttonSave.setEnabled(False)
+        self.buttonSave.clicked.connect(self.saveImageInfo)     
         self.labelDimensions = QtWidgets.QLabel('[h=0,w=0]')
         self.labelSliceId = QtWidgets.QLabel('Slice = 0')
         self.labelSliceId.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -65,6 +70,7 @@ class imageViewer():
         layoutH3.addWidget(self.labelDimensions)
         layoutH3.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))
         layoutH3.addWidget(self.buttonLoad)
+        layoutH3.addWidget(self.buttonSave)
         layoutH3.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))
         layoutH3.addWidget(self.labelSliceId)
         mainLayout.addWidget(self.canvas, QtWidgets.QSizePolicy.MinimumExpanding)
@@ -126,13 +132,75 @@ class imageViewer():
             self.m_map.sort()
             self.loadImageData(self.m_map[0],True)
             self.buttonPlus.setEnabled(True) 
-            self.buttonMinus.setEnabled(True) 
+            self.buttonMinus.setEnabled(True)
+            self.buttonSave.setEnabled(True) 
             self.slideBar.setMaximum(len(self.m_map)-1)
             self.slideBar.setValue(0)
             self.slideBar.setEnabled(True)
             self.labelSliceId.setText("Slice = 1")
             self.loaded = True
             self.filepaths = files
+        return
+
+    # @Slot()
+    def saveImageInfo(self):
+        self.getFullData()
+        print(self.full_data.shape, self.full_data.dtype)
+        db_dir = os.path.join(os.path.dirname(__file__), '..', 'imgs')
+        options = QtWidgets.QFileDialog.Options()
+        filename, _ = QtWidgets.QFileDialog.getSaveFileName(self.parent, 'Save Field Data', db_dir, "", options=options)
+        self.saveImageToRaw(filename)
+        self.saveImageToNF(filename)
+        self.full_data = None
+        return
+
+    def saveImageToRaw(self, filename):
+        file = filename + '.raw'
+        self.full_data.tofile(file)        
+        return
+
+    def saveImageToNF(self, filename):        
+        materials = {}
+        mat_i, cmat_i = np.unique(self.full_data,return_counts=True)
+        for i in range(len(mat_i)):
+            if mat_i[i] in materials:  
+                materials[mat_i[i]] += cmat_i[i]
+            else:
+                materials[mat_i[i]] = cmat_i[i]
+        materials = dict(sorted(materials.items(), key=lambda x: x[0]))
+        dimensions = np.array(self.full_data.shape[::-1], dtype=int)
+        vol = self.full_data.shape[2] * self.full_data.shape[1] * self.full_data.shape[0]
+        mat = np.array(list(materials.keys()))  
+        cmat = np.array(list(materials.values()))   
+        cmat = cmat*100.0/vol    
+
+        nfdata = {}
+        nfdata["type_of_analysis"] = 0
+        nfdata["magnetic_gradient"] = 1.0
+        nfdata["type_of_solver"] = 0
+        nfdata["type_of_rhs"] = 0
+        nfdata["voxel_size"] = 1.0
+        nfdata["solver_tolerance"] = 1.0e-6
+        nfdata["number_of_iterations"] = 10000
+        nfdata["image_dimensions"] = dimensions.tolist()          
+        nfdata["refinement"] = 1
+        nfdata["number_of_materials"] = mat.shape[0]
+        nfdata["properties_of_materials"] = mat.tolist()
+        nfdata["volume_fraction"] = list(np.around(cmat,2))
+        nfdata["data_type"] = "uint8"
+
+        # Save image data in NF format
+        file = filename + '.nf'
+        with open(file,'w') as file_nf:
+            sText = ''
+            for key, value in nfdata.items():
+                sText += '%' + str(key) + '\n'+ str(value) + '\n\n'
+            sText = sText.replace('], ','\n')
+            sText = sText.replace('[','')
+            sText = sText.replace(']','')
+            sText = sText.replace(',','')
+            file_nf.write(sText)
+        return
 
     # @Slot()
     def aboutDlg(self):
