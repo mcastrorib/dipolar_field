@@ -149,7 +149,7 @@ class dipolarApp(QtWidgets.QMainWindow):
             return
 
         try:
-            self.m_setup_tab.m_field.setFieldData(full_data, self.internal_field, self.internal_grads)
+            self.m_setup_tab.m_field.setFieldData(full_data, 1e-4*self.internal_field, 1e-2*self.internal_grads)
         except:
             print("could not show results")
             return
@@ -165,9 +165,6 @@ class dipolarApp(QtWidgets.QMainWindow):
             resolution = self.m_setup_tab.m_form.resolution
             bc = self.m_setup_tab.m_form.bc
             bc_flag = None
-            external_field = self.m_setup_tab.m_form.external_field
-            pore_sus = self.m_setup_tab.m_form.pore_sus
-            matrix_sus = self.m_setup_tab.m_form.matrix_sus
             fd_shape = self.m_setup_tab.m_viewer.full_data.shape
 
             if(bc == 'volume'):
@@ -181,6 +178,7 @@ class dipolarApp(QtWidgets.QMainWindow):
         try:
             print("Py::loading_field")
             ct = time.time()
+            print(resolution)
             self.internal_field = np.fromfile(_file[0], dtype='float64')
             self.internal_field = self.internal_field.reshape(fd_shape)
             cpp_time = time.time() - ct

@@ -138,7 +138,8 @@ class fieldViewer():
         widths = self.field_dist[1][1:] - self.field_dist[1][:-1]
         l_edges = self.field_dist[1][:-1]
         img = ax.bar(l_edges, heights, widths, align='edge')
-        ax.set_xlabel('Field Gradient (Gauss/cm)')
+        ax.set_xscale('log')
+        ax.set_xlabel('Field Gradient (T/m)')
         ax.set_ylabel('Volume fraction')
         ax.figure.canvas.draw()
         return
@@ -235,15 +236,15 @@ class fieldViewer():
         for z in range(self.m_map.shape[0]):
             for y in range(self.m_map.shape[1]):
                 for x in range(self.m_map.shape[2]):
-                    if(self.m_map[z,y,x] == 0):
+                    if(self.m_map[z,y,x] == 0 and self.field_grads[z,y,x] > 0.0):
                         pore_voxels.append(self.field_grads[z,y,x])
 
         self.field_dist = []
-        bins = 32
+        bins = 128
         abs_data = np.abs(pore_voxels)
-        max_val = abs_data.max()
-        min_val = abs_data.min()
-        hbins = np.linspace(min_val, max_val, bins)
+        max_val = np.ceil(np.log10(abs_data.max()))
+        min_val = np.floor(np.log10(abs_data.min()))
+        hbins = np.logspace(min_val, max_val, bins)
         dist = np.histogram(abs_data, hbins, density=False)
         self.field_dist.append(1.0 / dist[0].sum() * dist[0])
         self.field_dist.append(dist[1])

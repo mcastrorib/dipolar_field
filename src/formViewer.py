@@ -165,7 +165,7 @@ class formViewer():
         self.runButton.setEnabled(False)
         print('running analysis...')
         try:
-            self.readFormData()
+            self.readFormData(True)
             file = self.openFieldFile()
             if(file):
                 self.parent.load(file)
@@ -177,11 +177,15 @@ class formViewer():
         self.runButton.setEnabled(True)
         return
 
-    def readFormData(self):
+    def readFormData(self, _load=False):
         # Convert to gaussian units
         self.resolution = float(self.imgResolutionLineEdit.text())
         if(self.imgUnitBox.currentText() == 'um/voxel'):
-            self.resolution *= 1.0e-4
+            if(_load):
+                self.resolution *= 1.0e-6
+            else:
+                self.resolution *= 1.0e-4
+
 
         self.bc = self.imgBCBox.currentText()
         
