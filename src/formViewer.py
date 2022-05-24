@@ -61,13 +61,16 @@ class formViewer():
 
         self.matSusLabel = QtWidgets.QLabel('Matrix phase:')
         self.matSusLabel.setFont(headerFont)
-        self.matSusLineEdit = QtWidgets.QLineEdit('4e-5')
+        self.matSusLineEdit = QtWidgets.QLineEdit('5e-5')
         self.matSusLineEdit.setEnabled(True)
         self.matSusUnitBox = QtWidgets.QComboBox()
         self.matSusUnitBox.addItems(['SI', r'emu/cm³'])        
 
         self.runButton = QtWidgets.QPushButton('Generate')
         self.runButton.clicked.connect(self.runAnalysis)
+
+        self.loadButton = QtWidgets.QPushButton('Load')
+        self.loadButton.clicked.connect(self.loadField)
 
         
         # set the layouts
@@ -116,29 +119,27 @@ class formViewer():
         layoutMatrixSus.addWidget(self.matSusUnitBox) 
         layoutMatrixSus.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))   
 
-        layoutRunButton = QtWidgets.QHBoxLayout()
-        layoutRunButton.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))
-        layoutRunButton.addWidget(self.runButton)        
-        layoutRunButton.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))
+        layoutButtons = QtWidgets.QHBoxLayout()
+        layoutButtons.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))
+        layoutButtons.addWidget(self.runButton)        
+        layoutButtons.addWidget(self.loadButton)        
+        layoutButtons.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))
         
         for _ in range(5):      
             essentialsLayout.addWidget(QtWidgets.QLabel(''))
 
-        essentialsLayout.addLayout(layoutImage)
-        essentialsLayout.addLayout(layoutImgResolution)
-        essentialsLayout.addLayout(layoutImgBC)
+
         essentialsLayout.addWidget(QtWidgets.QLabel(''))
         essentialsLayout.addLayout(layoutExternalField)
         essentialsLayout.addLayout(layoutFieldIntensity)
-        essentialsLayout.addWidget(QtWidgets.QLabel(''))
         essentialsLayout.addLayout(layoutMagSus)        
         essentialsLayout.addLayout(layoutPoreSus)
         essentialsLayout.addLayout(layoutMatrixSus)
-        
-        for _ in range(5):      
-            essentialsLayout.addWidget(QtWidgets.QLabel(''))
-        
-        essentialsLayout.addLayout(layoutRunButton)
+        essentialsLayout.addWidget(QtWidgets.QLabel(''))
+        essentialsLayout.addLayout(layoutImage)
+        essentialsLayout.addLayout(layoutImgResolution)
+        essentialsLayout.addLayout(layoutImgBC)                
+        essentialsLayout.addLayout(layoutButtons)
         
         
         # adding layouts to main
@@ -156,6 +157,22 @@ class formViewer():
             self.parent.run()
         except:
             print("could not load form")
+
+        self.runButton.setEnabled(True)
+        return
+
+    def loadField(self):
+        self.runButton.setEnabled(False)
+        print('running analysis...')
+        try:
+            self.readFormData()
+            file = self.openFieldFile()
+            if(file):
+                self.parent.load(file)
+            else:
+                print('could not open file')
+        except:
+            print("could not open file/form")
 
         self.runButton.setEnabled(True)
         return
@@ -181,3 +198,9 @@ class formViewer():
             self.matrix_sus /= 4.0*np.pi
 
         return
+
+    def openFieldFile(self):
+        options = QtWidgets.QFileDialog.Options()
+        file, _ = QtWidgets.QFileDialog.getOpenFileNames(self.parent, "Open internal field data", "","Binary files (*.bin)", options=options)            
+        return file
+

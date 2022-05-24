@@ -157,6 +157,63 @@ class dipolarApp(QtWidgets.QMainWindow):
         return
 
     # Method
+    def load(self, _file):
+        try:
+            self.m_setup_tab.m_viewer.getFullData()
+
+            full_data = self.m_setup_tab.m_viewer.full_data
+            resolution = self.m_setup_tab.m_form.resolution
+            bc = self.m_setup_tab.m_form.bc
+            bc_flag = None
+            external_field = self.m_setup_tab.m_form.external_field
+            pore_sus = self.m_setup_tab.m_form.pore_sus
+            matrix_sus = self.m_setup_tab.m_form.matrix_sus
+            fd_shape = self.m_setup_tab.m_viewer.full_data.shape
+
+            if(bc == 'volume'):
+                bc_flag = False
+            elif(bc == 'periodic'):
+                bc_flag = True
+        except:
+            print('image not loaded')
+            return
+
+        try:
+            print("Py::loading_field")
+            ct = time.time()
+            self.internal_field = np.fromfile(_file[0], dtype='float64')
+            self.internal_field = self.internal_field.reshape(fd_shape)
+            cpp_time = time.time() - ct
+            print("Process took", cpp_time, "seconds")
+        except:
+            print('could not load magnetic field')
+            return
+
+        # Compute internal field gradients
+        self.internal_grads = np.zeros(fd_shape)
+        try:
+            print("Cpp::computing_grads")
+            ct = time.time()
+            dipolar_sum_core_dll.call_field_gradient(
+                ctypes.c_double(resolution), ctypes.c_bool(bc_flag), 
+                ctypes.c_int32(fd_shape[2]), ctypes.c_int32(fd_shape[1]), ctypes.c_int32(fd_shape[0]), 
+                ct_array_ptr(full_data), ct_array_ptr(self.internal_field), ct_array_ptr(self.internal_grads))
+            cpp_time = time.time() - ct
+            print("Process took", cpp_time, "seconds")
+        except:
+            print("could not compute field gradient")
+            return
+
+        try:
+            self.m_setup_tab.m_field.setFieldData(full_data, self.internal_field, self.internal_grads)
+        except:
+            print("could not show results")
+            return
+
+        return
+
+
+    # Method
     def analysis(self, data: np.ndarray, res_field: np.ndarray, resolution: float, external_field: float, pore_sus: float, matrix_sus: float):
         if(data.shape == res_field.shape and len(data.shape) == 3):
             sus_contrast = matrix_sus - pore_sus
@@ -197,3 +254,6 @@ class dipolarApp(QtWidgets.QMainWindow):
         return dipsum
 
     
+    def check_arrays_sizes(v1, v2):
+        if(v1.size != v2.size):
+            raise ValueError
