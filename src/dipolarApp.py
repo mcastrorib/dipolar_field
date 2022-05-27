@@ -18,7 +18,7 @@ from formViewer import formViewer
 dipolar_sum_core_dll = ez_load_dynamic_library(os.path.join(os.path.dirname(__file__), 'bin'), 'dipolar_sum_core')
 dipolar_sum_core_dll.call_dipolar_sum.restype = c_void_p
 dipolar_sum_core_dll.call_field_gradient.restype = c_void_p
-
+dipolar_sum_core_dll.call_omp.restype = c_void_p
 
 # Inherit from QDialog
 class dipolarApp(QtWidgets.QMainWindow):
@@ -97,7 +97,7 @@ class dipolarApp(QtWidgets.QMainWindow):
         return
 
     # Method
-    def run(self):
+    def run(self, _accmode=0):
         try:
             self.m_setup_tab.m_viewer.getFullData()
 
@@ -128,7 +128,7 @@ class dipolarApp(QtWidgets.QMainWindow):
                 ctypes.c_double(resolution), ctypes.c_bool(bc_flag), 
                 ctypes.c_double(external_field), ctypes.c_double(pore_sus), ctypes.c_double(matrix_sus),
                 ctypes.c_int32(fd_shape[2]), ctypes.c_int32(fd_shape[1]), ctypes.c_int32(fd_shape[0]), 
-                ct_array_ptr(full_data), ct_array_ptr(self.internal_field))
+                ct_array_ptr(full_data), ct_array_ptr(self.internal_field), ctypes.c_uint8(_accmode))
             cpp_time = time.time() - ct
             print("Process took", cpp_time, "seconds")
         except:
@@ -208,6 +208,17 @@ class dipolarApp(QtWidgets.QMainWindow):
             print("could not show results")
             return
 
+        return
+
+    def debug(self):
+        print('--trying to debug dll...')
+        size = 10000000
+        d1 = np.random.randn(size)
+        d2 = np.random.randn(size)
+        print(d1)
+        print(d2)
+        dipolar_sum_core_dll.call_omp(ct_array_ptr(d1), ct_array_ptr(d2), ctypes.c_int32(size))
+        print(d1)
         return
 
 

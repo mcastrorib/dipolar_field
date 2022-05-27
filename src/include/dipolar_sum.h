@@ -19,12 +19,13 @@ public:
 			   int dim_z, 
 			   uint8_pvm* map, 
 			   double* field);
+
 	virtual ~DipolarSum(){ 
 		if(this->points_list.size() > 0)
 			this->points_list.clear();
 	}
 
-	void run(bool _periodicBC = false);
+	void run(bool _periodicBC = false, uint8_pvm _accmode = ACC_NONE);
 
 private:
 	double resolution;

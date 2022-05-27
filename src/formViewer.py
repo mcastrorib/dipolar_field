@@ -64,13 +64,26 @@ class formViewer():
         self.matSusLineEdit = QtWidgets.QLineEdit('5e-5')
         self.matSusLineEdit.setEnabled(True)
         self.matSusUnitBox = QtWidgets.QComboBox()
-        self.matSusUnitBox.addItems(['SI', r'emu/cm³'])        
+        self.matSusUnitBox.addItems(['SI', r'emu/cm³']) 
+
+        self.parallelLabel = QtWidgets.QLabel('Parallelization:')
+        self.parallelLabel.setFont(headerFont)
+        self.parallelBox = QtWidgets.QComboBox()
+        self.parallelBox.addItems(['none', 'cpu', 'gpu']) 
+        self.parallel_map = {
+            'none': 0,
+            'cpu': 1,
+            'gpu': 2
+        }      
 
         self.runButton = QtWidgets.QPushButton('Generate')
         self.runButton.clicked.connect(self.runAnalysis)
 
         self.loadButton = QtWidgets.QPushButton('Load')
         self.loadButton.clicked.connect(self.loadField)
+
+        self.dllButton = QtWidgets.QPushButton('DLL')
+        self.dllButton.clicked.connect(self.debugDLL)
 
         
         # set the layouts
@@ -117,12 +130,19 @@ class formViewer():
         layoutMatrixSus.addWidget(self.matSusLabel)
         layoutMatrixSus.addWidget(self.matSusLineEdit)
         layoutMatrixSus.addWidget(self.matSusUnitBox) 
-        layoutMatrixSus.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))   
+        layoutMatrixSus.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))  
+
+        layoutParallelization = QtWidgets.QHBoxLayout()
+        layoutParallelization.addWidget(self.parallelLabel)
+        layoutParallelization.addWidget(self.parallelBox)
+        layoutParallelization.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))
+
 
         layoutButtons = QtWidgets.QHBoxLayout()
         layoutButtons.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))
         layoutButtons.addWidget(self.runButton)        
-        layoutButtons.addWidget(self.loadButton)        
+        layoutButtons.addWidget(self.loadButton)   
+        layoutButtons.addWidget(self.dllButton)        
         layoutButtons.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))
         
         for _ in range(5):      
@@ -138,7 +158,10 @@ class formViewer():
         essentialsLayout.addWidget(QtWidgets.QLabel(''))
         essentialsLayout.addLayout(layoutImage)
         essentialsLayout.addLayout(layoutImgResolution)
-        essentialsLayout.addLayout(layoutImgBC)                
+        essentialsLayout.addLayout(layoutImgBC)   
+        essentialsLayout.addWidget(QtWidgets.QLabel(''))
+        essentialsLayout.addLayout(layoutParallelization)             
+        essentialsLayout.addWidget(QtWidgets.QLabel(''))
         essentialsLayout.addLayout(layoutButtons)
         
         
@@ -153,8 +176,10 @@ class formViewer():
         self.runButton.setEnabled(False)
         print('running analysis...')
         try:
+            mode = self.parallelBox.currentText()
+            acc = self.paralell_map[mode]
             self.readFormData()
-            self.parent.run()
+            self.parent.run(acc)
         except:
             print("could not load form")
 
@@ -175,6 +200,13 @@ class formViewer():
             print("could not open file/form")
 
         self.runButton.setEnabled(True)
+        return
+
+    def debugDLL(self):
+        try:
+            self.parent.debug()
+        except:
+            print('could not debug dll')
         return
 
     def readFormData(self, _load=False):

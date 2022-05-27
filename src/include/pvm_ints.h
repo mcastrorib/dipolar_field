@@ -28,5 +28,8 @@
 #define M_PI 3.14159265358979323846
 #define M_2PI 2.0 * 3.14159265358979323846
 #define PY2C_IDX3D(x, y, z, lx, ly) ((z * (lx * ly)) + (y * lx) + x)
+#define ACC_NONE 0
+#define ACC_CPU 1
+#define ACC_GPU 2
 
 #endif // !PVM_INTS_H

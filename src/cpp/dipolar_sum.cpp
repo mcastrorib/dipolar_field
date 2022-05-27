@@ -2,6 +2,7 @@
 #include "dipolar_sum.h"
 #include <vec_3d.h>
 #include <progress_bar.h>
+#include "./cuda/dipolar_sum_cuda_callers.h"
 
 DipolarSum::DipolarSum(double resolution, 
 					   double external_field, 
@@ -27,10 +28,22 @@ DipolarSum::DipolarSum(double resolution,
 	this->m_grain = ((8.0/3.0) * M_PI *  pow(0.5 * this->resolution, 3.0) * this->matrix_sus * this->external_field);
 }
 
-void DipolarSum::run(bool _periodicBC)
+void DipolarSum::run(bool _periodicBC, uint8_pvm _accmode)
 {
-	if(_periodicBC)	(*this).analysis_periodic();
-	else (*this).analysis_volume();
+	if(_accmode == ACC_GPU)
+	{
+		if(_periodicBC) 
+			dipolar_sum_analysis_periodic_cuda();
+		else
+			dipolar_sum_analysis_volume_cuda();
+	}
+	else 
+	{
+		if(_periodicBC)	
+			(*this).analysis_periodic();
+		else 
+			(*this).analysis_volume();
+	}
 }
 
 void DipolarSum::analysis_volume()
