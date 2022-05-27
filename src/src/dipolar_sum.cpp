@@ -56,6 +56,7 @@ void DipolarSum::analysis_volume()
 					this->field[index] = (*this).dipsum_volume(ref, this->m_grain);
 			}
 		}
+		
 		// update progress bar
         pBar.update(1);
         pBar.print();		

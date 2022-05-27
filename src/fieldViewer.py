@@ -120,14 +120,25 @@ class fieldViewer():
         
         self.figure.clear()
         ax = self.figure.add_subplot(111)
-        img = ax.imshow(self.m_mask * self.m_data[_slice]) 
+        img = ax.imshow(self.m_mask * self.m_data[_slice] + ~self.m_mask * self.m_data.min()) 
         ax.set_xticks([])
-        ax.set_yticks([])    
+        ax.set_yticks([])        
         img.set_cmap(self.cmap)
         # img.set_cmap('seismic') 
-        self.figure.colorbar(img)
+            
+        cbar = self.figure.colorbar(img, fraction=0.05, pad=0.04)
         img.set_clim(self.clim)
+        
+        if(self.vizBox.currentText() == 'field'):
+            ax.set_title('Magnetic field')
+            cbar.set_label('T')
+        elif(self.vizBox.currentText() == 'gradients'):
+            ax.set_title('Field gradient')
+            cbar.set_label('T/m')
+
         ax.figure.canvas.draw()
+        ax.figure.tight_layout()
+
         # self.buttonPlot.setEnabled(False)  
         return
 
@@ -142,6 +153,7 @@ class fieldViewer():
         ax.set_xlabel('Field Gradient (T/m)')
         ax.set_ylabel('Volume fraction')
         ax.figure.canvas.draw()
+        ax.figure.tight_layout()
         return
 
     # @Slot()
@@ -186,13 +198,14 @@ class fieldViewer():
         self.loaded = True
         return        
 
-    # method
+    # Method
     def loadImageData(self, _slice, _updateWindow):
         if _updateWindow:
             self.labelDimensions.setText("[h="+str(self.m_data[_slice].shape[0])+",w="+str(self.m_data[_slice].shape[1])+"]")
             self.plotImage(_slice)
         return
 
+    # Method
     def changeDataViz(self):
         if(self.vizBox.currentText() == 'distribution'):
             self.loadDistViz()
@@ -214,12 +227,13 @@ class fieldViewer():
         self.m_map = full_img
         self.field_data = field
         self.field_grads = grads
-        self.field_lims = np.array([-1, 1]) * np.abs([field.max(), field.min()]).max()
+        self.field_lims = np.array([field.min(), field.max()])
         self.grads_lims = np.array([0, grads.max()])
         
         self.m_data = self.field_data
         self.clim = self.field_lims
         self.cmap = 'seismic'
+        self.curr_dviztype = 'field'
 
         self.vizBox.setEnabled(True)
         self.maskBox.setEnabled(True)
@@ -230,27 +244,26 @@ class fieldViewer():
         self.getFieldDist()
         return
 
+    # Method
     def getFieldDist(self):
         # get true points
-        pore_voxels = []
-        for z in range(self.m_map.shape[0]):
-            for y in range(self.m_map.shape[1]):
-                for x in range(self.m_map.shape[2]):
-                    if(self.m_map[z,y,x] == 0 and self.field_grads[z,y,x] > 0.0):
-                        pore_voxels.append(self.field_grads[z,y,x])
-
-        self.field_dist = []
-        bins = 128
-        abs_data = np.abs(pore_voxels)
-        max_val = np.ceil(np.log10(abs_data.max()))
-        min_val = np.floor(np.log10(abs_data.min()))
+        data = self.field_grads[self.m_map == 0].flatten()
+        data = data[data > 1.e-6]
+        
+        max_val = np.ceil(np.log10(data.max()))
+        min_val = np.floor(np.log10(data.min()))
+        bins = 32
+        if(max_val - min_val > 0.0):
+            bins *= int(max_val - min_val) 
         hbins = np.logspace(min_val, max_val, bins)
-        dist = np.histogram(abs_data, hbins, density=False)
+        dist = np.histogram(data, hbins, density=False)
+        
+        self.field_dist = []
         self.field_dist.append(1.0 / dist[0].sum() * dist[0])
         self.field_dist.append(dist[1])
         return
 
-        # @Slot()
+    # @Slot()
     def saveFieldData(self):
         db_dir = os.path.join(os.path.dirname(__file__), '..', 'db')
         options = QtWidgets.QFileDialog.Options()
