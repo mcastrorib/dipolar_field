@@ -4,7 +4,7 @@
 __global__ void m_kernel(void)
 {
 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
-	printf("Hello from thread %d", idx);
+	printf("Hello from thread %d \n", idx);
 }
 
 // Wrappers

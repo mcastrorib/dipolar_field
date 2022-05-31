@@ -48,6 +48,17 @@ void DipolarSum::analysis_volume()
 	long index;
 	Vec3d ref(0.0, 0.0, 0.0);
 	ProgressBar pBar((double) this->dim_z);
+	long vol = this->dim_x * this->dim_y * this->dimz;
+
+	// for(long i = 0; i < vol; i++)
+	// {
+	// 	long cx, cy, cz;
+	// 	cx = ...;
+	// 	cy = ...;
+	// 	cz = ...;
+		
+
+	// }
 
 	for(int z = 0; z < this->dim_z; z++)
 	{

@@ -177,8 +177,13 @@ class formViewer():
         print('running analysis...')
         try:
             mode = self.parallelBox.currentText()
-            acc = self.paralell_map[mode]
+            print(mode)
+            print(self.parallel_map)
+            print(self.parallel_map[mode])
+            acc = self.parallel_map[mode]
+            print(acc)
             self.readFormData()
+            print('ready to run!')
             self.parent.run(acc)
         except:
             print("could not load form")
