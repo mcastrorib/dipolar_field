@@ -19,7 +19,6 @@ DipolarSum::DipolarSum(double resolution,
 						   				map(map),
 						   				field(field)
 {
-	vector<Vec3d> points_list();
 	this->sus_contrast = this->matrix_sus - this->pore_sus;
 	this->m_pore = ((4.0/3.0) * M_PI *  pow(0.5 * this->resolution, 3.0) * this->sus_contrast * this->external_field);
 	this->m_grain = ((8.0/3.0) * M_PI *  pow(0.5 * this->resolution, 3.0) * this->matrix_sus * this->external_field);
@@ -37,51 +36,56 @@ void DipolarSum::run(bool _periodicBC, uint8_pvm _accmode)
 	else 
 	{
 		if(_periodicBC)	
-			(*this).analysis_periodic();
+			(*this).analysis_periodic(_accmode);
 		else 
-			(*this).analysis_volume();
+			(*this).analysis_volume(_accmode);
 	}
 }
 
-void DipolarSum::analysis_volume()
+void DipolarSum::analysis_volume(uint8_pvm _accmode)
 {
-	long index;
-	Vec3d ref(0.0, 0.0, 0.0);
-	ProgressBar pBar((double) this->dim_z);
-	long vol = this->dim_x * this->dim_y * this->dimz;
+	int64_pvm vol = this->dim_x * this->dim_y * this->dim_z;
+	ProgressBar pBar((double) vol);
+	int working_threads = PVM_GLOBAL_NUM_THREADS;
+	if(_accmode == ACC_NONE) working_threads = 1;
 
-	// for(long i = 0; i < vol; i++)
-	// {
-	// 	long cx, cy, cz;
-	// 	cx = ...;
-	// 	cy = ...;
-	// 	cz = ...;
-		
+	const int num_cpu_threads = working_threads;
+	#pragma omp parallel num_threads(num_cpu_threads) shared(vol, pBar)
+	{			
+		int start_idx, end_idx;
+		const int tid = omp_get_thread_num();
+		get_multi_thread_loop_limits(tid, num_cpu_threads, vol, start_idx, end_idx);
 
-	// }
-
-	for(int z = 0; z < this->dim_z; z++)
-	{
-		for(int y = 0; y < this->dim_y; y++)
+		int cx, cy, cz;
+		IndexConverter converter(this->dim_x, this->dim_y, this->dim_z);
+		Vec3d ref(0.0, 0.0, 0.0);	
+	
+		for (int idx = start_idx; idx < end_idx; idx++)
 		{
-			for(int x = 0; x < this->dim_x; x++)
-			{
-				index = PY2C_IDX3D(x, y, z, this->dim_x, this->dim_y);
-				ref.setX(this->resolution * (double) x);
-				ref.setY(this->resolution * (double) y);
-				ref.setZ(this->resolution * (double) z);
+	
+			converter.convert(idx);
+			cx = converter.getX();
+			cy = converter.getY();
+			cz = converter.getZ();
 
-				if(this->map[index] == 0)
-					this->field[index] = (*this).dipsum_volume(ref, this->m_pore);
-				else
-					this->field[index] = (*this).dipsum_volume(ref, this->m_grain);
+			ref.setX(this->resolution * (double) cx);
+			ref.setY(this->resolution * (double) cy);
+			ref.setZ(this->resolution * (double) cz);
+
+			if(this->map[idx] == 0)
+				this->field[idx] = (*this).dipsum_volume(ref, this->m_pore);
+			else
+				this->field[idx] = (*this).dipsum_volume(ref, this->m_grain);
+			
+			#pragma omp critical
+			{
+				// Update progress bar
+				pBar.update(1);
+				pBar.print();
 			}
 		}
-		
-		// update progress bar
-        pBar.update(1);
-        pBar.print();		
 	}
+
 	cout << endl;
 }
 
@@ -128,42 +132,55 @@ double DipolarSum::dipsum_volume(Vec3d &_ref, double m_factor)
 	return dsum;
 }
 
-void DipolarSum::analysis_periodic()
+void DipolarSum::analysis_periodic(uint8_pvm _accmode)
 {
-	// Initialize points list
-	if(this->points_list.size() > 0) 
-		this->points_list.clear();
-	for(int idx = 0; idx < 27; idx++)
-		this->points_list.push_back(Vec3d(0.0, 0.0, 0.0));
+	int64_pvm vol = this->dim_x * this->dim_y * this->dim_z;
+	ProgressBar pBar((double) vol);
+	int working_threads = PVM_GLOBAL_NUM_THREADS;
+	if(_accmode == ACC_NONE) working_threads = 1;
 
-	long index;
-	Vec3d ref(0.0, 0.0, 0.0);
-	ProgressBar pBar((double) this->dim_z);  
+	const int num_cpu_threads = working_threads;
+	#pragma omp parallel num_threads(num_cpu_threads) shared(vol, pBar)
+	{			
+		int start_idx, end_idx;
+		const int tid = omp_get_thread_num();
+		get_multi_thread_loop_limits(tid, num_cpu_threads, vol, start_idx, end_idx);
+
+		int cx, cy, cz;
+		IndexConverter converter(this->dim_x, this->dim_y, this->dim_z);
+		Vec3d ref(0.0, 0.0, 0.0);	
+		vector<Vec3d> pointsList;
+		for(int idx = 0; idx < 27; idx++) pointsList.push_back(Vec3d(0.0, 0.0, 0.0));
 	
-	for(int z = 0; z < this->dim_z; z++)
-	{
-		for(int y = 0; y < this->dim_y; y++)
-		{
-			for(int x = 0; x < this->dim_x; x++)
+		for (int idx = start_idx; idx < end_idx; idx++)
+		{	
+			converter.convert(idx);
+			cx = converter.getX();
+			cy = converter.getY();
+			cz = converter.getZ();
+
+			ref.setX(this->resolution * (double) cx);
+			ref.setY(this->resolution * (double) cy);
+			ref.setZ(this->resolution * (double) cz);
+
+			if(this->map[idx] == 0)
+				this->field[idx] = (*this).dipsum_periodic(ref, this->m_pore, pointsList);
+			else
+				this->field[idx] = (*this).dipsum_periodic(ref, this->m_grain, pointsList);
+			
+			#pragma omp critical
 			{
-				index = PY2C_IDX3D(x, y, z, this->dim_x, this->dim_y);
-				ref.setX(this->resolution * (double) x);
-				ref.setY(this->resolution * (double) y);
-				ref.setZ(this->resolution * (double) z);
-				if(this->map[index] == 0)	
-					this->field[index] = (*this).dipsum_periodic(ref, this->m_pore);
-				else
-					this->field[index] = (*this).dipsum_periodic(ref, this->m_grain);
+				// Update progress bar
+				pBar.update(1);
+				pBar.print();
 			}
 		}
-		// update progress bar
-        pBar.update(1);
-        pBar.print();	
 	}
+
 	cout << endl;
 }
 
-double DipolarSum::dipsum_periodic(Vec3d &_ref, double m_factor)
+double DipolarSum::dipsum_periodic(Vec3d &_ref, double m_factor, vector<Vec3d> &_pointsList)
 {
 	double dsum = 0.0;
 	Vec3d ek(0.0, 0.0, 1.0);
@@ -187,13 +204,13 @@ double DipolarSum::dipsum_periodic(Vec3d &_ref, double m_factor)
 					curr.setX((double) x);
 					curr.setY((double) y);
 					curr.setZ((double) z);
-					(*this).update_points_list(curr);
+					(*this).update_points_list(curr, _pointsList);
 
-					for(int idx = 0; idx < this->points_list.size(); idx++)
+					for(int idx = 0; idx < _pointsList.size(); idx++)
 					{	
-						dist.setX(this->resolution * this->points_list[idx].getX() - _ref.getX());
-						dist.setY(this->resolution * this->points_list[idx].getY() - _ref.getY());
-						dist.setZ(this->resolution * this->points_list[idx].getZ() - _ref.getZ());
+						dist.setX(this->resolution * _pointsList[idx].getX() - _ref.getX());
+						dist.setY(this->resolution * _pointsList[idx].getY() - _ref.getY());
+						dist.setZ(this->resolution * _pointsList[idx].getZ() - _ref.getZ());
 						norm_dist = dist.norm();					
 						unit.setX(dist.getX() / (norm_dist + 1e-20));
 						unit.setY(dist.getY() / (norm_dist + 1e-20));
@@ -211,7 +228,7 @@ double DipolarSum::dipsum_periodic(Vec3d &_ref, double m_factor)
 	return dsum;
 }
 
-void DipolarSum::update_points_list(Vec3d &_ref)
+void DipolarSum::update_points_list(Vec3d &_ref, vector<Vec3d> &_pointsList)
 {
 	int pIndex;
 	double x_coords[] = {-(_ref.getX() + 1.0), _ref.getX(), this->dim_x * 2.0 - (_ref.getX() + 1.0)};
@@ -225,9 +242,9 @@ void DipolarSum::update_points_list(Vec3d &_ref)
 			for(int j = 0; j < 3; j++)
 			{
 				pIndex = PY2C_IDX3D(j,i,k,3,3);
-				this->points_list[pIndex].setX(x_coords[j]);
-				this->points_list[pIndex].setY(y_coords[i]);
-				this->points_list[pIndex].setZ(z_coords[k]);
+				_pointsList[pIndex].setX(x_coords[j]);
+				_pointsList[pIndex].setY(y_coords[i]);
+				_pointsList[pIndex].setZ(z_coords[k]);
 			}		
 		}	
 	}
