@@ -1,8 +1,5 @@
 #include <cmath>
 #include "dipolar_sum.h"
-#include <vec_3d.h>
-#include <progress_bar.h>
-#include "./cuda/dipolar_sum_cuda_callers.h"
 
 DipolarSum::DipolarSum(double resolution, 
 					   double external_field, 

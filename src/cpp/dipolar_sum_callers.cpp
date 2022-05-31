@@ -27,7 +27,6 @@ void call_omp(
 
 	#pragma omp parallel num_threads(num_cpu_threads)
 	{			
-		int64_pvm xjump;
 		int start_x, end_x;
 		const int tid = omp_get_thread_num();
 		get_multi_thread_loop_limits(tid, num_cpu_threads, size, start_x, end_x);

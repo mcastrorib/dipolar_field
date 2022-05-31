@@ -1,7 +1,7 @@
 #include <cmath>
 #include "field_gradient.h"
-#include <vec_3d.h>
-#include <progress_bar.h>
+#include "vec_3d.h"
+#include "progress_bar.h"
 
 FieldGradient::FieldGradient(double resolution, 
 							 int dim_x, 
