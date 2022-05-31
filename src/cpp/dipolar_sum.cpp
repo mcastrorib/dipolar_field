@@ -68,9 +68,9 @@ void DipolarSum::analysis_volume(uint8_pvm _accmode)
 			cy = converter.getY();
 			cz = converter.getZ();
 
-			ref.setX(this->resolution * (double) cx);
-			ref.setY(this->resolution * (double) cy);
-			ref.setZ(this->resolution * (double) cz);
+			ref.setX((double) cx);
+			ref.setY((double) cy);
+			ref.setZ((double) cz);
 
 			if(this->map[idx] == 0)
 				this->field[idx] = (*this).dipsum_volume(ref, this->m_pore);
@@ -110,12 +110,12 @@ double DipolarSum::dipsum_volume(Vec3d &_ref, double m_factor)
 				index = PY2C_IDX3D(x, y, z, this->dim_x, this->dim_y);
 				if(this->map[index] != 0)
 				{
-					curr.setX(this->resolution * (double) x);
-					curr.setY(this->resolution * (double) y);
-					curr.setZ(this->resolution * (double) z);					
-					dist.setX(curr.getX() - _ref.getX());
-					dist.setY(curr.getY() - _ref.getY());
-					dist.setZ(curr.getZ() - _ref.getZ());
+					curr.setX((double) x);
+					curr.setY((double) y);
+					curr.setZ((double) z);					
+					dist.setX(this->resolution * (curr.getX() - _ref.getX()));
+					dist.setY(this->resolution * (curr.getY() - _ref.getY()));
+					dist.setZ(this->resolution * (curr.getZ() - _ref.getZ()));
 					norm_dist = dist.norm();					
 					unit.setX(dist.getX() / (norm_dist + 1e-20));
 					unit.setY(dist.getY() / (norm_dist + 1e-20));
@@ -159,9 +159,9 @@ void DipolarSum::analysis_periodic(uint8_pvm _accmode)
 			cy = converter.getY();
 			cz = converter.getZ();
 
-			ref.setX(this->resolution * (double) cx);
-			ref.setY(this->resolution * (double) cy);
-			ref.setZ(this->resolution * (double) cz);
+			ref.setX((double) cx);
+			ref.setY((double) cy);
+			ref.setZ((double) cz);
 
 			if(this->map[idx] == 0)
 				this->field[idx] = (*this).dipsum_periodic(ref, this->m_pore, pointsList);
@@ -208,9 +208,9 @@ double DipolarSum::dipsum_periodic(Vec3d &_ref, double m_factor, vector<Vec3d> &
 
 					for(int idx = 0; idx < _pointsList.size(); idx++)
 					{	
-						dist.setX(this->resolution * _pointsList[idx].getX() - _ref.getX());
-						dist.setY(this->resolution * _pointsList[idx].getY() - _ref.getY());
-						dist.setZ(this->resolution * _pointsList[idx].getZ() - _ref.getZ());
+						dist.setX(this->resolution * (_pointsList[idx].getX() - _ref.getX()));
+						dist.setY(this->resolution * (_pointsList[idx].getY() - _ref.getY()));
+						dist.setZ(this->resolution * (_pointsList[idx].getZ() - _ref.getZ()));
 						norm_dist = dist.norm();					
 						unit.setX(dist.getX() / (norm_dist + 1e-20));
 						unit.setY(dist.getY() / (norm_dist + 1e-20));
@@ -224,7 +224,6 @@ double DipolarSum::dipsum_periodic(Vec3d &_ref, double m_factor, vector<Vec3d> &
 			}
 		}	
 	}
-
 	return dsum;
 }
 
