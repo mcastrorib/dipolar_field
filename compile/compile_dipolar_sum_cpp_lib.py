@@ -85,12 +85,7 @@ if __name__ == '__main__':
   # set strings with compilable source code dir and includes 
   # also pre set cpp compiler options
   src_dir = os.path.join(os.getcwd(), os.path.dirname(__file__), '..', 'src')
-  include_path = os.path.join(os.getcwd(), os.path.dirname(__file__), '..', 'src', 'include')
-  include_cuda_path = os.path.join(os.getcwd(), os.path.dirname(__file__), '..', 'src', 'cpp/cuda')
-  include_string = f'-I {include_path}:{include_cuda_path}'
-  cpp_opts = f"--compiler-options –x cu"
-
-
+  
   # get names of files with .cu and .c extensions and store
   # in list with .o extension (will be used for linking)
   o_files  = [extractFilename(f)+'.o' for f in glob(f"{src_dir}/**/*.cu",recursive=True)]
@@ -104,8 +99,8 @@ if __name__ == '__main__':
 
   # array of compiler directives
   compiler_directives = [
-    f"nvcc -c ../src/cpp/*.cu {input_string} --compiler-options '-fPIC'",
-    f"nvcc -c ../src/cpp/*.cpp {input_string} -x cu --compiler-options '-m64 -fPIC -O3 -fopenmp'",
+    f"nvcc -c {src_dir}/cpp/*.cu {input_string} --compiler-options '-fPIC'",
+    f"nvcc -c {src_dir}/cpp/*.cpp {input_string} -x cu --compiler-options '-m64 -fPIC -O3 -fopenmp'",
     f"nvcc -o {executable_name} --shared {o_files_string} -Xcompiler -fopenmp -O3 --compiler-options '-fPIC' {input_string}"
   ]
 
@@ -117,7 +112,7 @@ if __name__ == '__main__':
       handle_error(command)
   
   terminal.call('rm {}'.format(o_files_string),shell=True)
-  shutil.move('{}'.format(executable_name), '../src/bin/{}'.format(executable_name))
+  shutil.move('{}'.format(executable_name), f"{src_dir}/bin/{executable_name}")
   
   # print feedback that compiling went ok  
   print('{} binary executable successfully compiled.'.format(executable_name))
