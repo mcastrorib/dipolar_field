@@ -105,7 +105,7 @@ if __name__ == '__main__':
   # array of compiler directives
   compiler_directives = [
     f"nvcc -c ../src/cpp/*.cu {input_string} --compiler-options '-fPIC'",
-    f"nvcc -c ../src/cpp/*.cpp {input_string} -x cu --compiler-options '-fPIC'",
+    f"nvcc -c ../src/cpp/*.cpp {input_string} -x cu --compiler-options '-m64 -fPIC -O3 -fopenmp'",
     f"nvcc -o {executable_name} --shared {o_files_string} -Xcompiler -fopenmp -O3 --compiler-options '-fPIC' {input_string}"
   ]
 
