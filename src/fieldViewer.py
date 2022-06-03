@@ -268,27 +268,28 @@ class fieldViewer():
         db_dir = os.path.join(os.path.dirname(__file__), '..', 'db')
         options = QtWidgets.QFileDialog.Options()
         filename = QtWidgets.QFileDialog.getSaveFileName(self.parent, 'Save Field Data', db_dir, "", options=options)
-        os.mkdir(filename[0])
-        my_file = filename[0].split(os.sep)[-1]
+        if(filename[0] != ''):
+            os.mkdir(filename[0])
+            my_file = filename[0].split(os.sep)[-1]
 
-        field_dims = np.array([self.field_data.shape[2],self.m_data.shape[1],self.m_data.shape[0]],dtype='int32')
+            field_dims = np.array([self.field_data.shape[2],self.m_data.shape[1],self.m_data.shape[0]],dtype='int32')
 
-        # Save image data in BIN format
-        dims_filename = my_file + '_dimensions.bin'
-        with open(os.path.join(filename[0], dims_filename), "bw") as file_dims:
-            field_dims.tofile(file_dims)
+            # Save image data in BIN format
+            dims_filename = my_file + '_dimensions.bin'
+            with open(os.path.join(filename[0], dims_filename), "bw") as file_dims:
+                field_dims.tofile(file_dims)
 
-        # Save image data in BIN format
-        bin_filename = my_file + '.bin'
-        with open(os.path.join(filename[0], bin_filename), "bw") as file_bin:
-            self.field_data.tofile(file_bin)
+            # Save image data in BIN format
+            bin_filename = my_file + '.bin'
+            with open(os.path.join(filename[0], bin_filename), "bw") as file_bin:
+                self.field_data.tofile(file_bin)
 
-        # Save image data in TXT format
-        txt_filename = my_file + '.txt'    
-        with open(os.path.join(filename[0], txt_filename), "w") as file_txt:
-            field_dims.tofile(file_txt, sep=',')
-            file_txt.write('\n')
-            self.field_data.tofile(file_txt, sep=',')
+            # Save image data in TXT format
+            txt_filename = my_file + '.txt'    
+            with open(os.path.join(filename[0], txt_filename), "w") as file_txt:
+                field_dims.tofile(file_txt, sep=',')
+                file_txt.write('\n')
+                self.field_data.tofile(file_txt, sep=',')
 
         return
 
