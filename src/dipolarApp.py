@@ -178,7 +178,6 @@ class dipolarApp(QtWidgets.QMainWindow):
         try:
             print("Py::loading_field")
             ct = time.time()
-            print(resolution)
             self.internal_field = np.fromfile(_file[0], dtype='float64')
             self.internal_field = self.internal_field.reshape(fd_shape)
             cpp_time = time.time() - ct

@@ -112,8 +112,7 @@ class fieldViewer():
 
     # @Slot()
     def plotImage(self, _slice):
-        print(self.clim)
-        self.m_mask = 1.0
+        self.m_mask = 1
         if(self.maskBox.currentText() == 'pore'):
             self.m_mask = np.where(self.m_map[_slice] == 0, True, False)
         elif(self.maskBox.currentText() == 'grain'):
