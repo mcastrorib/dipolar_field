@@ -112,7 +112,7 @@ class fieldViewer():
 
     # @Slot()
     def plotImage(self, _slice):
-        print(self.m_data)
+        print(self.clim)
         self.m_mask = 1.0
         if(self.maskBox.currentText() == 'pore'):
             self.m_mask = np.where(self.m_map[_slice] == 0, True, False)
@@ -137,8 +137,8 @@ class fieldViewer():
             ax.set_title('Field gradient')
             cbar.set_label('T/m')
 
-        ax.figure.canvas.draw()
         ax.figure.tight_layout()
+        ax.figure.canvas.draw()
 
         # self.buttonPlot.setEnabled(False)  
         return
@@ -155,8 +155,8 @@ class fieldViewer():
         ax.set_xlabel('Field Gradient (T/m)')
         ax.set_ylabel('Volume fraction')
         ax.set_ylim([0.0, 1.1*heights.max()])
-        ax.figure.canvas.draw()
         ax.figure.tight_layout()
+        ax.figure.canvas.draw()
         return
 
     # @Slot()
