@@ -112,6 +112,7 @@ class fieldViewer():
 
     # @Slot()
     def plotImage(self, _slice):
+        print(self.m_data)
         self.m_mask = 1.0
         if(self.maskBox.currentText() == 'pore'):
             self.m_mask = np.where(self.m_map[_slice] == 0, True, False)
@@ -148,10 +149,12 @@ class fieldViewer():
         heights = self.field_dist[0]
         widths = self.field_dist[1][1:] - self.field_dist[1][:-1]
         l_edges = self.field_dist[1][:-1]
-        img = ax.bar(l_edges, heights, widths, align='edge')
+        # img = ax.bar(l_edges, heights, widths, align='edge')
+        img = ax.plot(l_edges + widths*0.5, heights)
         ax.set_xscale('log')
         ax.set_xlabel('Field Gradient (T/m)')
         ax.set_ylabel('Volume fraction')
+        ax.set_ylim([0.0, 1.1*heights.max()])
         ax.figure.canvas.draw()
         ax.figure.tight_layout()
         return
@@ -252,7 +255,7 @@ class fieldViewer():
         
         max_val = np.ceil(np.log10(data.max()))
         min_val = np.floor(np.log10(data.min()))
-        bins = 32
+        bins = 16
         if(max_val - min_val > 0.0):
             bins *= int(max_val - min_val) 
         hbins = np.logspace(min_val, max_val, bins)
