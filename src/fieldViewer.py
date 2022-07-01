@@ -254,7 +254,7 @@ class fieldViewer():
         
         max_val = np.ceil(np.log10(data.max()))
         min_val = np.floor(np.log10(data.min()))
-        bins = 16
+        bins = 32
         if(max_val - min_val > 0.0):
             bins *= int(max_val - min_val) 
         hbins = np.logspace(min_val, max_val, bins)
