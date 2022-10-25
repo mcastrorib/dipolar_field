@@ -122,7 +122,7 @@ class imageViewer():
     # @Slot()
     def openImage(self):
         options = QtWidgets.QFileDialog.Options()
-        files, _ = QtWidgets.QFileDialog.getOpenFileNames(self.parent, "Open uCT-image", "","Image Files (*.png);;Image Files (*.png)", options=options)
+        files, _ = QtWidgets.QFileDialog.getOpenFileNames(self.parent, "Open uCT-image", "","Image Files (*.png);;Image Files (*.tif)", options=options)
         if files:
             if len(self.m_map) > 0:
                 self.removeTempImages()
@@ -148,9 +148,11 @@ class imageViewer():
         print(self.full_data.shape, self.full_data.dtype)
         db_dir = os.path.join(os.path.dirname(__file__), '..', 'imgs')
         options = QtWidgets.QFileDialog.Options()
-        filename, _ = QtWidgets.QFileDialog.getSaveFileName(self.parent, 'Save Field Data', db_dir, "", options=options)
-        self.saveImageToRaw(filename)
-        self.saveImageToNF(filename)
+        filename, filtered = QtWidgets.QFileDialog.getSaveFileName(self.parent, 'Save Field Data', db_dir, "Both files (*.raw, *.nf);; Raw file (*.raw);; Neutral file (*.nf)", options=options)
+        if(filtered != "Neutral file (*.nf)"):
+            self.saveImageToRaw(filename)
+        if(filtered != "Raw file (*.raw)"):
+            self.saveImageToNF(filename)
         self.full_data = None
         return
 
