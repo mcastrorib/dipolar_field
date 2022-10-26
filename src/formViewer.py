@@ -6,6 +6,7 @@ class formViewer():
         self.parent = _parent
         self.m_widget = _widget
 
+        self.pore_color = 0
         self.resolution = None
         self.bc = None
         self.external_field = None
@@ -28,6 +29,9 @@ class formViewer():
         # set RW config widgets
         self.imageLabel = QtWidgets.QLabel('Image properties:')
         self.imageLabel.setFont(headerFont)
+        self.imgPoreColorLabel = QtWidgets.QLabel('Pore color:')
+        self.imgPoreColorLabel.setFont(headerFont)
+        self.imgPoreColorLineEdit = QtWidgets.QLineEdit('0')
         self.imgResolutionLabel = QtWidgets.QLabel('Resolution:')
         self.imgResolutionLabel.setFont(headerFont)
         self.imgResolutionLineEdit = QtWidgets.QLineEdit('1.0')
@@ -97,6 +101,12 @@ class formViewer():
         layoutImage = QtWidgets.QHBoxLayout()
         layoutImage.addWidget(self.imageLabel)
 
+
+        layoutImgPoreColor = QtWidgets.QHBoxLayout()
+        layoutImgPoreColor.addWidget(self.imgPoreColorLabel)
+        layoutImgPoreColor.addWidget(self.imgPoreColorLineEdit)
+        layoutImgPoreColor.addItem(QtWidgets.QSpacerItem(15, 15, QtWidgets.QSizePolicy.MinimumExpanding))
+
         layoutImgResolution = QtWidgets.QHBoxLayout()
         layoutImgResolution.addWidget(self.imgResolutionLabel)
         layoutImgResolution.addWidget(self.imgResolutionLineEdit)
@@ -157,6 +167,7 @@ class formViewer():
         essentialsLayout.addLayout(layoutMatrixSus)
         essentialsLayout.addWidget(QtWidgets.QLabel(''))
         essentialsLayout.addLayout(layoutImage)
+        essentialsLayout.addLayout(layoutImgPoreColor)
         essentialsLayout.addLayout(layoutImgResolution)
         essentialsLayout.addLayout(layoutImgBC)   
         essentialsLayout.addWidget(QtWidgets.QLabel(''))
@@ -211,6 +222,7 @@ class formViewer():
 
     def readFormData(self, _load=False):
         # Convert to gaussian units
+        self.pore_color = int(self.imgPoreColorLineEdit.text())
         self.resolution = float(self.imgResolutionLineEdit.text())
         if(self.imgUnitBox.currentText() == 'um/voxel'):
             if(_load):

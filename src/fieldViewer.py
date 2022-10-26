@@ -100,6 +100,7 @@ class fieldViewer():
         self.field_lims = None # numpy array
         self.field_dist = None # list with numpy arrays of amps, bins
         self.grads_lims = None # numpy array
+        self.pore_color = 0
 
     
     def clear(self):
@@ -114,13 +115,13 @@ class fieldViewer():
     def plotImage(self, _slice):
         self.m_mask = 1
         if(self.maskBox.currentText() == 'pore'):
-            self.m_mask = np.where(self.m_map[_slice] == 0, True, False)
+            self.m_mask = np.where(self.m_map[_slice] == self.pore_color, True, False)
         elif(self.maskBox.currentText() == 'grain'):
-            self.m_mask = np.where(self.m_map[_slice] == 0, False, True)
+            self.m_mask = np.where(self.m_map[_slice] == self.pore_color, False, True)
         
         self.figure.clear()
         ax = self.figure.add_subplot(111)
-        img = ax.imshow(self.m_mask * self.m_data[_slice] + ~self.m_mask * self.m_data.min()) 
+        img = ax.imshow(self.m_mask * self.m_data[_slice] + ~self.m_mask * self.m_data.min()) #, norm=matplotlib.colors.LogNorm()) 
         ax.set_xticks([])
         ax.set_yticks([])        
         img.set_cmap(self.cmap)
@@ -219,13 +220,14 @@ class fieldViewer():
         elif(self.vizBox.currentText() == 'gradients'):
             self.m_data = self.field_grads
             self.clim = self.grads_lims
-            self.cmap = 'Greys'
+            self.cmap = 'Reds'
             self.loadFieldViz()
         return
     
 
     # Method
-    def setFieldData(self, full_img, field, grads):
+    def setFieldData(self, full_img, field, grads, pore_color):
+        self.pore_color = pore_color
         self.m_map = full_img
         self.field_data = field
         self.field_grads = grads
@@ -249,7 +251,7 @@ class fieldViewer():
     # Method
     def getFieldDist(self):
         # get true points
-        data = self.field_grads[self.m_map == 0].flatten()
+        data = self.field_grads[self.m_map == self.pore_color].flatten()
         data = data[data > 1.e-6]
         
         max_val = np.ceil(np.log10(data.max()))

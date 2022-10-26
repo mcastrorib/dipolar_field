@@ -102,6 +102,7 @@ class dipolarApp(QtWidgets.QMainWindow):
             self.m_setup_tab.m_viewer.getFullData()
 
             full_data = self.m_setup_tab.m_viewer.full_data
+            pore_color = self.m_setup_tab.m_form.pore_color
             resolution = self.m_setup_tab.m_form.resolution
             bc = self.m_setup_tab.m_form.bc
             bc_flag = None
@@ -149,7 +150,7 @@ class dipolarApp(QtWidgets.QMainWindow):
             return
 
         try:
-            self.m_setup_tab.m_field.setFieldData(full_data, 1e-4*self.internal_field, 1e-2*self.internal_grads)
+            self.m_setup_tab.m_field.setFieldData(full_data, 1e-4*self.internal_field, 1e-2*self.internal_grads, pore_color)
         except:
             print("could not show results")
             return
@@ -162,6 +163,7 @@ class dipolarApp(QtWidgets.QMainWindow):
             self.m_setup_tab.m_viewer.getFullData()
 
             full_data = self.m_setup_tab.m_viewer.full_data
+            pore_color = self.m_setup_tab.m_form.pore_color
             resolution = self.m_setup_tab.m_form.resolution
             bc = self.m_setup_tab.m_form.bc
             bc_flag = None
@@ -202,7 +204,7 @@ class dipolarApp(QtWidgets.QMainWindow):
             return
 
         try:
-            self.m_setup_tab.m_field.setFieldData(full_data, self.internal_field, self.internal_grads)
+            self.m_setup_tab.m_field.setFieldData(full_data, self.internal_field, self.internal_grads, pore_color)
         except:
             print("could not show results")
             return
