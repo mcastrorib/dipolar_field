@@ -150,7 +150,7 @@ class dipolarApp(QtWidgets.QMainWindow):
             return
 
         try:
-            self.m_setup_tab.m_field.setFieldData(full_data, 1e-4*self.internal_field, 1e-2*self.internal_grads, pore_color)
+            self.m_setup_tab.m_field.setFieldData(full_data, self.internal_field, self.internal_grads, pore_color)
         except:
             print("could not show results")
             return
@@ -182,6 +182,7 @@ class dipolarApp(QtWidgets.QMainWindow):
             ct = time.time()
             self.internal_field = np.fromfile(_file[0], dtype='float64')
             self.internal_field = self.internal_field.reshape(fd_shape)
+            self.internal_field = self.internal_field
             cpp_time = time.time() - ct
             print("Process took", cpp_time, "seconds")
         except:
@@ -204,7 +205,7 @@ class dipolarApp(QtWidgets.QMainWindow):
             return
 
         try:
-            self.m_setup_tab.m_field.setFieldData(full_data, self.internal_field, self.internal_grads, pore_color)
+            self.m_setup_tab.m_field.setFieldData(full_data, 1e4*self.internal_field, 1e2*self.internal_grads, pore_color)
         except:
             print("could not show results")
             return

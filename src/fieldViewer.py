@@ -132,10 +132,10 @@ class fieldViewer():
         
         if(self.vizBox.currentText() == 'field'):
             ax.set_title('Magnetic field')
-            cbar.set_label('T')
+            cbar.set_label('G')
         elif(self.vizBox.currentText() == 'gradients'):
             ax.set_title('Field gradient')
-            cbar.set_label('T/m')
+            cbar.set_label('G/cm')
 
         ax.figure.tight_layout()
         ax.figure.canvas.draw()
@@ -152,7 +152,7 @@ class fieldViewer():
         # img = ax.bar(l_edges, heights, widths, align='edge')
         img = ax.plot(l_edges + widths*0.5, heights)
         ax.set_xscale('log')
-        ax.set_xlabel('Field Gradient (T/m)')
+        ax.set_xlabel('Field Gradient (G/cm)')
         ax.set_ylabel('Volume fraction')
         ax.set_ylim([0.0, 1.1*heights.max()])
         ax.figure.tight_layout()
