@@ -51,7 +51,7 @@ class fieldViewer():
         self.buttonSave.setEnabled(False)
         self.buttonSave.clicked.connect(self.saveFieldData)
         self.vizBox = QtWidgets.QComboBox()
-        self.vizBox.addItems(['field', 'gradients', 'distribution'])
+        self.vizBox.addItems(['field', 'gradients', 'distribution', 'meangrads'])
         self.vizBox.setEnabled(False)     
         self.maskBox = QtWidgets.QComboBox()
         self.maskBox.addItems(['pore', 'grain', 'all'])
@@ -100,6 +100,7 @@ class fieldViewer():
         self.field_lims = None # numpy array
         self.field_dist = None # list with numpy arrays of amps, bins
         self.grads_lims = None # numpy array
+        self.mean_grads = None # numpy array
         self.pore_color = 0
 
     
@@ -159,6 +160,16 @@ class fieldViewer():
         ax.figure.canvas.draw()
         return
 
+    def plotMeanGradsPerSlice(self):
+        self.figure.clear()
+        ax = self.figure.add_subplot(111)
+        img = ax.plot(self.mean_grads)
+        ax.set_ylabel('Mean Field Gradient (G/cm)')
+        ax.set_xlabel('Slice')
+        ax.figure.tight_layout()
+        ax.figure.canvas.draw()
+        return
+
     # @Slot()
     def changeValue(self, _value):
         current_slice = _value
@@ -201,6 +212,18 @@ class fieldViewer():
         self.loaded = True
         return        
 
+    def loadMeanGradsViz(self):
+        self.buttonPlus.setEnabled(False) 
+        self.buttonMinus.setEnabled(False) 
+        self.slideBar.setMaximum(self.field_data.shape[0]-1)
+        self.slideBar.setValue(0)
+        self.slideBar.setEnabled(False)
+        self.labelSliceId.setText("")
+        self.plotMeanGradsPerSlice()
+        self.loaded = True
+        return        
+
+
     # Method
     def loadImageData(self, _slice, _updateWindow):
         if _updateWindow:
@@ -222,6 +245,8 @@ class fieldViewer():
             self.clim = self.grads_lims
             self.cmap = 'Reds'
             self.loadFieldViz()
+        elif(self.vizBox.currentText() == 'meangrads'):
+            self.loadMeanGradsViz()
         return
     
 
@@ -246,13 +271,14 @@ class fieldViewer():
         self.loadFieldViz()
 
         self.getFieldDist()
+        self.getMeanGradsPerSlice()
         return
 
     # Method
     def getFieldDist(self):
         # get true points
-        data = self.field_grads[self.m_map == self.pore_color].flatten()
-        data = data[data > 1.e-6]
+        data = self.field_grads[self.m_map == self.pore_color]
+        data = data[data > 1.e-8]
         
         max_val = np.ceil(np.log10(data.max()))
         min_val = np.floor(np.log10(data.min()))
@@ -266,6 +292,24 @@ class fieldViewer():
         self.field_dist.append(1.0 / dist[0].sum() * dist[0])
         self.field_dist.append(dist[1])
         return
+
+    # Method
+    def getMeanGradsPerSlice(self):
+        slices = self.field_grads.shape[0]
+        self.mean_grads = np.zeros(slices)
+
+        for i in range(slices):
+            data = self.field_grads[i]
+            filtered = data[self.m_map[i] == self.pore_color]
+            if(filtered.size > 0):
+                self.mean_grads[i] = filtered.mean()
+            else:
+                self.mean_grads[i] = np.nan
+
+        # print(self.mean_grads)
+
+        return
+
 
     # @Slot()
     def saveFieldData(self):

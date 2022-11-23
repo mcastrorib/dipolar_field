@@ -110,6 +110,7 @@ class dipolarApp(QtWidgets.QMainWindow):
             pore_sus = self.m_setup_tab.m_form.pore_sus
             matrix_sus = self.m_setup_tab.m_form.matrix_sus
             fd_shape = self.m_setup_tab.m_viewer.full_data.shape
+            print(fd_shape)
 
             self.internal_field = np.zeros(fd_shape)
             self.internal_grads = np.zeros(fd_shape)
@@ -168,7 +169,8 @@ class dipolarApp(QtWidgets.QMainWindow):
             bc = self.m_setup_tab.m_form.bc
             bc_flag = None
             fd_shape = self.m_setup_tab.m_viewer.full_data.shape
-
+            print(fd_shape)
+            
             if(bc == 'volume'):
                 bc_flag = False
             elif(bc == 'periodic'):
