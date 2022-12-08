@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import pandas as pd
 import matplotlib
 from matplotlib.backends.backend_qt5agg import (FigureCanvasQTAgg, NavigationToolbar2QT)
 from matplotlib.figure import Figure
@@ -49,7 +50,7 @@ class fieldViewer():
         self.buttonSave = QtWidgets.QPushButton('Save')
         self.buttonSave.setMinimumSize(QtCore.QSize(50, 40))
         self.buttonSave.setEnabled(False)
-        self.buttonSave.clicked.connect(self.saveFieldData)
+        self.buttonSave.clicked.connect(self.saveData)
         self.vizBox = QtWidgets.QComboBox()
         self.vizBox.addItems(['field', 'gradients', 'distribution', 'meangrads'])
         self.vizBox.setEnabled(False)     
@@ -310,6 +311,26 @@ class fieldViewer():
 
         return
 
+    # @Slot()
+    def saveData(self):
+        if(self.vizBox.currentText() == 'distribution'):
+            self.saveGradsDist()
+        else:
+            print('save field data to be implemented')
+        return
+
+    def saveGradsDist(self):    
+        d = {'bins':self.field_dist[1][1:], 'amps':self.field_dist[0], 'csum':self.field_dist[0].cumsum()}
+        df = pd.DataFrame(data=d)
+        
+        db_dir = os.path.join(os.path.dirname(__file__), '..', 'db')
+        options = QtWidgets.QFileDialog.Options()
+        filename = QtWidgets.QFileDialog.getSaveFileName(self.parent, 'Save Field Data', db_dir, "", options=options)
+        if(filename[0] != ''):
+
+            # Save dist data in CSV format
+            df.to_csv(filename[0] + '.csv')
+        return
 
     # @Slot()
     def saveFieldData(self):
