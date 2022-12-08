@@ -184,7 +184,6 @@ class dipolarApp(QtWidgets.QMainWindow):
             ct = time.time()
             self.internal_field = np.fromfile(_file[0], dtype='float64')
             self.internal_field = self.internal_field.reshape(fd_shape)
-            self.internal_field = self.internal_field
             cpp_time = time.time() - ct
             print("Process took", cpp_time, "seconds")
         except:
