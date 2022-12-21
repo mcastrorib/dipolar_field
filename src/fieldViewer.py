@@ -281,8 +281,8 @@ class fieldViewer():
         data = self.field_grads[self.m_map == self.pore_color]
         data = data[data > 1.e-8]
         
-        max_val = np.ceil(np.log10(data.max()))
-        min_val = np.floor(np.log10(data.min()))
+        max_val = np.ceil(np.log10(data.max()+1))
+        min_val = np.floor(np.log10(data.min()-1))
         bins = 64
         if(max_val - min_val > 0.0):
             bins *= int(max_val - min_val) 
